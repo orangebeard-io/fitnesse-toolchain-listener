@@ -34,7 +34,7 @@ Create `reportportal.properties` in your project's resource folder, containing:
  ```
  with 
  ```java
- @RunWith(ReportPortalEnabledToolchainTestRunner.class)
+ @RunWith(OrangebeardJunitRunner.class)
  ````
  in the test that is started from your pipeline (which is probably src/test/java/.../FixtureDebugTest.java)
  
