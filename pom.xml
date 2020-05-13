@@ -26,9 +26,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com/orangebeard-io/fitnesse-toolchain-listener.git</connection>
+        <connection>scm:git:git@github.com:orangebeard-io/fitnesse-toolchain-listener.git</connection>
         <url>https://github.com/orangebeard-io/fitnesse-toolchain-listener.git</url>
-        <developerConnection>scm:git:git@github.com/orangebeard-io/fitnesse-toolchain-listener.git</developerConnection>
+        <developerConnection>scm:git:git@github.com:orangebeard-io/fitnesse-toolchain-listener.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
