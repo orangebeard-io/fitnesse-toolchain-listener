@@ -26,9 +26,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:orangebeard-io/fitnesse-toolchain-listener.git</connection>
+        <connection>scm:git:git@github.com/orangebeard-io/fitnesse-toolchain-listener.git</connection>
         <url>https://github.com/orangebeard-io/fitnesse-toolchain-listener.git</url>
-        <developerConnection>scm:git:git@github.com:orangebeard-io/fitnesse-toolchain-listener.git</developerConnection>
+        <developerConnection>scm:git:git@github.com/orangebeard-io/fitnesse-toolchain-listener.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
@@ -38,8 +38,6 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <fitnesse.version>20200404</fitnesse.version>
         <hsac.version>4.15.0</hsac.version>
-        <rp.java-client.version>5.0.0-BETA-17</rp.java-client.version>
-        <rp.model.version>5.2.0</rp.model.version>
     </properties>
 
     <repositories>
@@ -69,12 +67,12 @@
         <dependency>
             <groupId>com.epam.reportportal</groupId>
             <artifactId>client-java</artifactId>
-            <version>${rp.java-client.version}</version>
+            <version>5.0.0-BETA-16</version>
         </dependency>
         <dependency>
             <groupId>com.epam.reportportal</groupId>
             <artifactId>commons-model</artifactId>
-            <version>${rp.model.version}</version>
+            <version>5.2.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -106,42 +104,15 @@
     <build>
         <plugins>
         <!--no phase-->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.0.0</version>
-                <configuration>
-                    <!-- get all project dependencies -->
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <!-- bind to the packaging phase -->
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.0</version>
+            <configuration>
+                <source>${maven.compiler.source}</source>
+                <target>${maven.compiler.target}</target>
+            </configuration>
+        </plugin>
         </plugins>
     </build>
 
