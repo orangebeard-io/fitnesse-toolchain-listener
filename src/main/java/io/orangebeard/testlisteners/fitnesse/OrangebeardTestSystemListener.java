@@ -24,8 +24,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.orangebeard.testlisteners.fitnesse.helper.TestPageHelper.getSuiteName;
-import static io.orangebeard.testlisteners.fitnesse.helper.TestPageHelper.getTestName;
+import static io.orangebeard.testlisteners.fitnesse.helper.TestPageHelper.*;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
@@ -40,12 +39,12 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private static final String PROP_TAGS = "rp.tags";
     private static final String PROP_ATTRIBUTES = "rp.attributes";
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(OrangebeardTestSystemListener.class);
-    private String propertyFileName = "reportportal.properties";
+    private final String PROPERTY_FILE_NAME = "reportportal.properties";
     private OrangebeardLogger orangebeardLogger;
     private ReportPortal reportPortal;
     private Launch launch;
     private ToolchainRunningContext context = new ToolchainRunningContext();
-    private OrangebeardTableLogParser htmlChunkParser = new OrangebeardTableLogParser();
+    private final OrangebeardTableLogParser htmlChunkParser = new OrangebeardTableLogParser();
     private Maybe<String> launchId;
 
 
@@ -57,9 +56,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     @Override
     public void testSystemStarted(TestSystem testSystem) {
-
+        context.setTestSystemName(testSystem.getName());
     }
-
 
 
     @Override
@@ -67,13 +65,13 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         Maybe<String> testId = context.getTestId(context.getLatestTestName());
         String level = "DEBUG";
         String tableBlock = s.substring(s.indexOf("<table"), s.lastIndexOf("</table>") + 8);
-        if(s.contains("class=\"error\"") || s.contains("class=\"fail\"")) {
+        if (s.contains("class=\"error\"") || s.contains("class=\"fail\"")) {
             level = "ERROR";
         } else if (reportTable(tableBlock)) {
             level = "INFO";
         }
 
-        if(s.toLowerCase().contains("<table")) {
+        if (s.toLowerCase().contains("<table")) {
             s = tableBlock;
         }
 
@@ -87,14 +85,16 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         s = s.replaceAll("class=\"toolchainTable [^\"]*\"", "style=\"box-shadow: 0px 3px 10px 0px rgba(0, 0, 0, 0.19);\"");
 
         String enrichedLog = htmlChunkParser.embedImagesAndStripHyperlinks(s);
-        orangebeardLogger.sendLogData(testId.blockingGet(), enrichedLog, level);
-        orangebeardLogger.sendAttachmentsIfPresent(testId.blockingGet(), s);
+        orangebeardLogger.sendLogData(testId.blockingGet(), launchId.blockingGet(), enrichedLog, level);
+        orangebeardLogger.sendAttachmentsIfPresent(testId.blockingGet(), launchId.blockingGet(), s);
     }
 
+    //Scenario's, templates, libraries and imports are debug info
     private boolean reportTable(String tableBlock) {
-       return !tableBlock.startsWith("<table class=\"toolchainTable scenarioTable\"") &&
-               !tableBlock.startsWith("<table class=\"toolchainTable importTable\"") &&
-               !tableBlock.startsWith("<table class=\"toolchainTable libraryTable\"");
+        return !tableBlock.startsWith("<table class=\"toolchainTable scenarioTable\"") &&
+                !tableBlock.startsWith("<table class=\"toolchainTable tableTemplate\"") &&
+                !tableBlock.startsWith("<table class=\"toolchainTable importTable\"") &&
+                !tableBlock.startsWith("<table class=\"toolchainTable libraryTable\"");
     }
 
 
@@ -148,6 +148,14 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         rq.setEndTime(Date.from(Instant.now()));
         orangebeardLogger.attachFitNesseResultsToRun(launchId.blockingGet());
         launch.finish(rq);
+
+        flushLaunchData();
+    }
+
+    private void flushLaunchData() {
+        launch = null;
+        reportPortal = null;
+        context = new ToolchainRunningContext();
     }
 
     @Override
@@ -165,7 +173,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private String testResult(TestSummary testSummary) {
-        if(testSummary.getExceptions() > 0 || testSummary.getWrong() > 0) {
+        if (testSummary.getExceptions() > 0 || testSummary.getWrong() > 0) {
             return "failed";
         } else {
             return "passed";
@@ -173,14 +181,28 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private Maybe<String> getAndOrStartSuite(TestPage testPage) {
-        String suiteName = getSuiteName(testPage);
-        Maybe<String> suiteId = context.getSuiteId(suiteName);
-        if (suiteId == null) {
-            StartTestItemRQ rq = getSuite(suiteName);
-            suiteId = launch.startTestItem(rq);
-            context.addSuite(suiteName, suiteId);
-            logger.info("[Orangebeard] suite {} started with id {}", suiteName, suiteId.blockingGet());
+        String fullSuiteName = getFullSuiteName(testPage);
+        String[] suites = fullSuiteName.split("\\.");
+        String suitePath = "";
+        Maybe<String> suiteId = null;
+
+        for (String suite : suites) {
+            Maybe<String> parentSuiteId = context.getSuiteId(suitePath);
+            suitePath = suitePath + "." + suite;
+            suiteId = context.getSuiteId(suitePath);
+            if (suiteId == null) {
+                suiteId = startSuite(parentSuiteId, suite);
+                context.addSuite(suitePath, suiteId);
+            }
         }
+
+        return suiteId;
+    }
+
+    private Maybe<String> startSuite(Maybe<String> parentId, String shortName) {
+        StartTestItemRQ rq = getSuite(shortName);
+        Maybe<String> suiteId = launch.startTestItem(parentId, rq);
+        logger.info("[Orangebeard] suite {} started in {} with id {}", shortName, parentId, suiteId.blockingGet());
         return suiteId;
     }
 
@@ -212,7 +234,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         String token = getToken();
 
         if (endpoint == null) {
-            logger.warn("[Orangebeard] Cannot find " + PROP_AUGMENTED_ENDPOINT + " in reportportal.properties. Nothing will be reported to the augmented endpoint!");
+            logger.warn("[Orangebeard] Cannot find " + PROP_AUGMENTED_ENDPOINT + " in " + PROPERTY_FILE_NAME + ". Nothing will be reported to the augmented endpoint!");
         }
         if (token == null) {
             logger.warn("[Orangebeard] Cannot find " + AUGMENTED_TESTING_TOKEN + " in environment variables or in properties. Nothing will be reported to the augmented endpoint!");
@@ -240,14 +262,15 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         Set<ItemAttributesRQ> tags = new HashSet<>();
         tags.addAll(extractTags(System.getProperty(PROP_TAGS)));
         tags.addAll(extractAttributes(System.getProperty(PROP_ATTRIBUTES)));
+        tags.add(new ItemAttributesRQ("Test System", context.getTestSystemName()));
 
         Properties propertyFile = new Properties();
         try {
-            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.propertyFileName)));
+            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.PROPERTY_FILE_NAME)));
             tags.addAll(extractTags(propertyFile.getProperty(PROP_TAGS)));
             tags.addAll(extractAttributes(propertyFile.getProperty(PROP_ATTRIBUTES)));
         } catch (NullPointerException | IOException e) {
-            logger.warn("[Orangebeard] Cannot find " + PROP_TAGS + " or " + PROP_ATTRIBUTES + " in reportportal.properties!");
+            logger.warn("[Orangebeard] Cannot find " + PROP_TAGS + " or " + PROP_ATTRIBUTES + " in " + PROPERTY_FILE_NAME + "!");
         }
         return tags;
     }
@@ -281,11 +304,11 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
         Properties propertyFile = new Properties();
         try {
-            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.propertyFileName)));
+            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.PROPERTY_FILE_NAME)));
             String launchName = propertyFile.getProperty(PROP_LAUNCHNAME);
             return launchName != null ? launchName : testPage.getFullPath();
         } catch (NullPointerException | IOException e) {
-            logger.warn("[Orangebeard] Cannot find " + PROP_LAUNCHNAME + " in reportportal.properties. Classname is set as launch name!");
+            logger.warn("[Orangebeard] Cannot find " + PROP_LAUNCHNAME + " in " + PROPERTY_FILE_NAME + ". Classname is set as launch name!");
             return testPage.getFullPath();
         }
     }
@@ -293,7 +316,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private String getEndpointFromProperties() {
         Properties propertyFile = new Properties();
         try {
-            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.propertyFileName)));
+            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.PROPERTY_FILE_NAME)));
             return propertyFile.getProperty(PROP_AUGMENTED_ENDPOINT);
         } catch (NullPointerException | IOException e) {
             return null;
@@ -303,7 +326,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private String getToken() {
         Properties propertyFile = new Properties();
         try {
-            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.propertyFileName)));
+            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.PROPERTY_FILE_NAME)));
             String token = propertyFile.getProperty(PROP_AUGMENTED_TOKEN);
             if (token != null) {
                 return token;

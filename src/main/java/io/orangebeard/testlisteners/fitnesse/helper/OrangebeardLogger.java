@@ -39,7 +39,6 @@ public class OrangebeardLogger {
     private ReportPortal reportPortal;
 
 
-
     public OrangebeardLogger(ReportPortal reportPortal) {
         this.reportPortal = reportPortal;
         this.environment = Environment.getInstance();
@@ -50,22 +49,25 @@ public class OrangebeardLogger {
         this.environment = environment;
     }
 
-    public void sendLogData(String testId, String chunk, String level) {
-            SaveLogRQ saveLogRQ = new SaveLogRQ();
-            saveLogRQ.setMessage(chunk);
-            saveLogRQ.setLogTime(Calendar.getInstance().getTime());
-            saveLogRQ.setItemUuid(testId);
-            saveLogRQ.setLevel(level);
-            saveLog(saveLogRQ);
+    public void sendLogData(String testId, String launchId, String chunk, String level) {
+        SaveLogRQ saveLogRQ = new SaveLogRQ();
+        saveLogRQ.setMessage(chunk);
+        saveLogRQ.setLogTime(Calendar.getInstance().getTime());
+        saveLogRQ.setItemUuid(testId);
+        saveLogRQ.setLaunchUuid(launchId);
+        saveLogRQ.setLevel(level);
+
+        saveLog(saveLogRQ);
     }
 
 
-    private void sendAttachment(final String message, final String level, final String testId,
-            final SaveLogRQ.File file) {
+    private void sendAttachment(final String message, final String level, final String testId, String launchId,
+                                final SaveLogRQ.File file) {
         SaveLogRQ rq = new SaveLogRQ();
         rq.setMessage(message);
         rq.setLevel(level);
         rq.setItemUuid(testId);
+        rq.setLaunchUuid(launchId);
         rq.setLogTime(Calendar.getInstance().getTime());
         if (file != null) {
             sendFile(file, rq);
@@ -97,29 +99,30 @@ public class OrangebeardLogger {
         try {
             logItem.blockingGet(); // not entirely sure, but if this is not here, (probably because of a timing issue), the log is not reported.
         } catch (Exception e) {
+            System.err.println(e.getMessage());
         }
     }
 
-    public void sendAttachmentsIfPresent(String testId, String message) {
+    public void sendAttachmentsIfPresent(String testId, String launchId, String message) {
         Matcher attachments = attachmentPattern.matcher(message);
         while (attachments.find()) {
-            if(!attachments.group(1).startsWith("http://") && !attachments.group(1).startsWith("https://")) {
+            if (!attachments.group(1).startsWith("http://") && !attachments.group(1).startsWith("https://")) {
                 String filePath = new File(environment.getFitNesseRootDir(), attachments.group(1)).getPath();
                 try {
                     String fileName = new File(filePath).getName();
                     SaveLogRQ.File attachmentFile = new SaveLogRQ.File();
                     attachmentFile.setContent(Files.asByteSource(new File(filePath)).read());
                     attachmentFile.setName(fileName);
-                    sendAttachment(fileName, "DEBUG", testId, attachmentFile);
+                    sendAttachment(fileName, "DEBUG", testId, launchId, attachmentFile);
                 } catch (IOException e) {
-                    sendLogData(testId, "Unable to read attachment file for: " + message, "DEBUG");
+                    sendLogData(testId, launchId, "Unable to read attachment file for: " + message, "DEBUG");
                 }
             }
         }
     }
 
     public void attachFitNesseResultsToRun(String launchId) {
-        try{
+        try {
             ZipFile testReportBundle = new ZipFile("FitNesseResults.zip");
             testReportBundle.addFolder(new File(Environment.getInstance().getFitNesseRootDir()));
             FileInputStream zipStr = new FileInputStream(testReportBundle.getFile());
@@ -128,9 +131,9 @@ public class OrangebeardLogger {
             zipFile.setContent(zippedReport);
             zipFile.setName("FitNesse-results.zip");
             System.out.println("Attaching result zip");
-            sendAttachment("FitNesse-results.zip", "INFO", launchId, zipFile);
+            sendAttachment("FitNesse-results.zip", "INFO", null, launchId, zipFile);
         } catch (Exception e) {
-            System.err.println("Zip failed");
+            System.err.println("Zip failed: " + e.getMessage());
             logger.error("An exception occured when attempting to attach the html report to the launch", e);
         }
     }

@@ -1,6 +1,7 @@
 package io.orangebeard.testlisteners.fitnesse.helper;
 
 import io.reactivex.Maybe;
+import io.reactivex.MaybeObserver;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ public class ToolchainRunningContext {
     private HashMap<String, Maybe<String>> tests = new HashMap<>();
     private HashMap<String, Maybe<String>> suites = new HashMap<>();
     private String latestTest;
+    private String testSystemName;
 
     public void addTest(String testName, Maybe<String> id) {
         tests.put(testName, id);
@@ -32,12 +34,12 @@ public class ToolchainRunningContext {
         return tests.containsKey(testName);
     }
 
-    public Maybe<String> getSuiteId(String suiteName) {
-        return suites.get(suiteName);
+    public Maybe<String> getSuiteId(String fullSuiteName) {
+        return suites.get(fullSuiteName);
     }
 
-    public void addSuite(String suiteName, Maybe<String> suiteId) {
-        suites.put(suiteName, suiteId);
+    public void addSuite(String fullSuiteName, Maybe<String> suiteId) {
+        suites.put(fullSuiteName, suiteId);
     }
 
     public List<Maybe<String>> getAllSuiteIds() {
@@ -46,5 +48,13 @@ public class ToolchainRunningContext {
 
     public String getLatestTestName() {
         return latestTest;
+    }
+
+    public String getTestSystemName() {
+        return testSystemName;
+    }
+
+    public void setTestSystemName(String testSystemName) {
+        this.testSystemName = testSystemName;
     }
 }

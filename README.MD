@@ -21,6 +21,10 @@ Create `reportportal.properties` in your project's resource folder, containing:
  - rp.launch = launch_name
  - rp.project = project_name
  
+For more optional parameters, see: https://github.com/reportportal/client-java/blob/master/README.md
+Async reporting is working with this logger.
+
+ 
  #### Environment properties
   Properties can also be set in the build, by passing them to the maven build. For example: 
   ```
@@ -39,5 +43,5 @@ Create `reportportal.properties` in your project's resource folder, containing:
  in the test that is started from your pipeline (which is probably src/test/java/.../FixtureDebugTest.java)
  
 ### Limitations
- - Currently, this runner/listener can not be used when you use >1 testsystem (i.e. Fit and Slim in one suite)
- - Full HTML report zip (and other attachments) will not be saved when its size is exceeds 1 MB due to an api limitation
+ - Currently, this runner/listener will start separate launches for each testsystem if you use >1 testsystem (i.e. Fit and Slim)in one suite
+ - Full HTML report zip (or any other attachments) will not be saved when its size is exceeds 1 MB due to an api limitation

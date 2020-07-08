@@ -16,10 +16,10 @@ public class TestPageHelper {
         return testPage.getName();
     }
 
-    public static String getSuiteName(TestPage testPage) {
-        String[] testNameParts = getFullTestName(testPage).split("\\.");
-        if (testNameParts.length > 1) {
-            return testNameParts[testNameParts.length - 2];
+    public static String getFullSuiteName (TestPage testPage) {
+        String fullTestName = getFullTestName(testPage);
+        if(fullTestName.contains(".")) {
+            return fullTestName.substring(0, fullTestName.lastIndexOf("."));
         } else {
             return "default";
         }

@@ -34,10 +34,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
-        <fitnesse.version>20200404</fitnesse.version>
-        <hsac.version>4.15.0</hsac.version>
-        <rp.java-client.version>5.0.0-BETA-17</rp.java-client.version>
-        <rp.model.version>5.2.0</rp.model.version>
+        <fitnesse.version>20200501</fitnesse.version>
+        <hsac.version>4.15.3</hsac.version>
+        <rp.java-client.version>5.0.2</rp.java-client.version>
+        <rp.model.version>5.0.0</rp.model.version>
     </properties>
 
     <repositories>
