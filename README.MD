@@ -3,7 +3,7 @@
 A test output listener for Praegus Open Source Toolchain FitNesse tests.
 
 ## Installation
-[![Maven Central](https://img.shields.io/maven-central/v/io.orangebeard/fitnesse-toolchain-listener.svg?maxAge=3600)](https://mvnrepository.com/artifact/io.orangebeard/allure-fitnesse-toolchain-listener)
+[![Maven Central](https://img.shields.io/maven-central/v/io.orangebeard/fitnesse-toolchain-listener.svg?maxAge=3600)](https://mvnrepository.com/artifact/io.orangebeard/fitnesse-toolchain-listener)
 
  ### 1. Add dependency
  Add this project as a dependency to your pom
