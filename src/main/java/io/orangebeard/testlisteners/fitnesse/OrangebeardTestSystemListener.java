@@ -10,7 +10,10 @@ import com.epam.ta.reportportal.ws.model.launch.Mode;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import fitnesse.testrunner.WikiTestPage;
 import fitnesse.testsystems.*;
+import fitnesse.wiki.PageData;
+import fitnesse.wiki.WikiPageProperty;
 import io.orangebeard.testlisteners.fitnesse.helper.OrangebeardLogger;
 import io.orangebeard.testlisteners.fitnesse.helper.OrangebeardTableLogParser;
 import io.orangebeard.testlisteners.fitnesse.helper.ToolchainRunningContext;
@@ -63,44 +66,21 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testOutputChunk(String s) {
         Maybe<String> testId = context.getTestId(context.getLatestTestName());
-        String level = "DEBUG";
-        String tableBlock = s.substring(s.indexOf("<table"), s.lastIndexOf("</table>") + 8);
-        if (s.contains("class=\"error\"") || s.contains("class=\"fail\"")) {
-            level = "ERROR";
-        } else if (reportTable(tableBlock)) {
-            level = "INFO";
-        }
+        String level = htmlChunkParser.determineLogLevel(s);
 
         if (s.toLowerCase().contains("<table")) {
-            s = tableBlock;
+            s = htmlChunkParser.removeNonTableProlog(s);
+            s = htmlChunkParser.applyOrangebeardTableStyling(s);
         }
-
-        s = s.replaceAll("class=\"fail\"", "style=\"background-color:#ffaeaf; padding: 3px; border-radius: 3px;\"");
-        s = s.replaceAll("class=\"pass\"", "style=\"background-color:#44ffa5; padding: 3px; border-radius: 3px;\"");
-        s = s.replaceAll("class=\"diff\"", "style=\"background-color:#f1e38f; padding: 3px; border-radius: 3px;\"");
-        s = s.replaceAll("class=\"ignore\"", "style=\"background-color:#a8e2ff; padding: 3px; border-radius: 3px;\"");
-        s = s.replaceAll("class=\"error\"", "style=\"background-color:#ffe67b; padding: 3px; border-radius: 3px;\"");
-        s = s.replaceAll("class=\"slimRowTitle\"", "style=\"font-weight:bold; background-color: #ececec;\"");
-        s = s.replaceAll("class=\"title\"", "style=\"font-size:1.2em; font-weight:bold; border-bottom:1px solid silver;\"");
-        s = s.replaceAll("class=\"toolchainTable [^\"]*\"", "style=\"box-shadow: 0px 3px 10px 0px rgba(0, 0, 0, 0.19);\"");
 
         String enrichedLog = htmlChunkParser.embedImagesAndStripHyperlinks(s);
         orangebeardLogger.sendLogData(testId.blockingGet(), launchId.blockingGet(), enrichedLog, level);
         orangebeardLogger.sendAttachmentsIfPresent(testId.blockingGet(), launchId.blockingGet(), s);
     }
 
-    //Scenario's, templates, libraries and imports are debug info
-    private boolean reportTable(String tableBlock) {
-        return !tableBlock.startsWith("<table class=\"toolchainTable scenarioTable\"") &&
-                !tableBlock.startsWith("<table class=\"toolchainTable tableTemplate\"") &&
-                !tableBlock.startsWith("<table class=\"toolchainTable importTable\"") &&
-                !tableBlock.startsWith("<table class=\"toolchainTable libraryTable\"");
-    }
-
 
     @Override
     public void testStarted(TestPage testPage) {
-
         startLaunchIfRequired(testPage);
 
         Maybe<String> suiteId = getAndOrStartSuite(testPage);
@@ -191,7 +171,9 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             suitePath = suitePath + "." + suite;
             suiteId = context.getSuiteId(suitePath);
             if (suiteId == null) {
-                suiteId = startSuite(parentSuiteId, suite);
+                Map<String, String> suiteMetaData = retrieveSuiteMetaData(fullSuiteName, testPage);
+
+                suiteId = startSuite(parentSuiteId, suite, suiteMetaData);
                 context.addSuite(suitePath, suiteId);
             }
         }
@@ -199,8 +181,21 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return suiteId;
     }
 
-    private Maybe<String> startSuite(Maybe<String> parentId, String shortName) {
-        StartTestItemRQ rq = getSuite(shortName);
+    private Map<String, String> retrieveSuiteMetaData(String fullSuiteName, TestPage testPage) {
+        Map<String, String> metaData = new HashMap<>();
+        if (testPage instanceof WikiTestPage) {
+
+            PageData suitePageData = ((WikiTestPage) testPage).getSourcePage().getParent().getData();
+            metaData.put("description", suitePageData.getAttribute(WikiPageProperty.HELP));
+            if (suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
+                metaData.put("tags", suitePageData.getAttribute(WikiPageProperty.SUITES));
+            }
+        }
+        return metaData;
+    }
+
+    private Maybe<String> startSuite(Maybe<String> parentId, String shortName, Map<String, String> metaData) {
+        StartTestItemRQ rq = getSuite(shortName, metaData);
         Maybe<String> suiteId = launch.startTestItem(parentId, rq);
         logger.info("[Orangebeard] suite {} started in {} with id {}", shortName, parentId, suiteId.blockingGet());
         return suiteId;
@@ -223,7 +218,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         startLaunchRQ.setMode(Mode.DEFAULT);
         startLaunchRQ.setStartTime(Date.from(Instant.now()));
         startLaunchRQ.setName(getLaunchNameFromProperties(testPage));
-        startLaunchRQ.setAttributes(getAttributes());
+        startLaunchRQ.setAttributes(getLauchAttributes());
         return startLaunchRQ;
     }
 
@@ -258,24 +253,24 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
     }
 
-    private Set<ItemAttributesRQ> getAttributes() {
+    private Set<ItemAttributesRQ> getLauchAttributes() {
         Set<ItemAttributesRQ> tags = new HashSet<>();
         tags.addAll(extractTags(System.getProperty(PROP_TAGS)));
-        tags.addAll(extractAttributes(System.getProperty(PROP_ATTRIBUTES)));
+        tags.addAll(getLaunchAttributesFromProperties(System.getProperty(PROP_ATTRIBUTES)));
         tags.add(new ItemAttributesRQ("Test System", context.getTestSystemName()));
 
         Properties propertyFile = new Properties();
         try {
             propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.PROPERTY_FILE_NAME)));
             tags.addAll(extractTags(propertyFile.getProperty(PROP_TAGS)));
-            tags.addAll(extractAttributes(propertyFile.getProperty(PROP_ATTRIBUTES)));
+            tags.addAll(getLaunchAttributesFromProperties(propertyFile.getProperty(PROP_ATTRIBUTES)));
         } catch (NullPointerException | IOException e) {
-            logger.warn("[Orangebeard] Cannot find " + PROP_TAGS + " or " + PROP_ATTRIBUTES + " in " + PROPERTY_FILE_NAME + "!");
+            logger.info("[Orangebeard] Cannot find " + PROP_TAGS + " or " + PROP_ATTRIBUTES + " in " + PROPERTY_FILE_NAME);
         }
         return tags;
     }
 
-    private Set<ItemAttributesRQ> extractAttributes(String propAttributes) {
+    private Set<ItemAttributesRQ> getLaunchAttributesFromProperties(String propAttributes) {
         if (propAttributes == null) {
             return Collections.emptySet();
         }
@@ -292,7 +287,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private Set<ItemAttributesRQ> extractTags(String propTags) {
         if (propTags != null) {
-            return Arrays.stream(propTags.split(";")).map(ItemAttributesRQ::new).collect(Collectors.toSet());
+            return Arrays.stream(propTags.split("\\s*[;,]\\s*")).map(ItemAttributesRQ::new).collect(Collectors.toSet());
         }
         return Collections.emptySet();
     }
@@ -342,16 +337,48 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         StartTestItemRQ startTestItemRQ = new StartTestItemRQ();
         startTestItemRQ.setStartTime(Date.from(Instant.now()));
         startTestItemRQ.setName(getTestName(testPage));
-        startTestItemRQ.setType("STEP");
+        startTestItemRQ.setType(determinePageType(testPage.getName()));
         startTestItemRQ.setUniqueId(UUID.randomUUID().toString());
+
+        if (testPage instanceof WikiTestPage) {
+            PageData pageData = ((WikiTestPage) testPage).getData();
+
+            String helpText = pageData.getAttribute(WikiPageProperty.HELP);
+            startTestItemRQ.setDescription(helpText);
+
+            if (pageData.getAttribute(WikiPageProperty.SUITES) != null) {
+                Set<ItemAttributesRQ> tags = extractTags(pageData.getAttribute(WikiPageProperty.SUITES));
+                startTestItemRQ.setAttributes(tags);
+            }
+        }
+
         return startTestItemRQ;
     }
 
-    private StartTestItemRQ getSuite(String suiteName) {
+    private String determinePageType(String pageName) {
+        switch (pageName) {
+            case "SuiteSetUp":
+                return "BEFORE_METHOD";
+            case "SuiteTearDown":
+                return "AFTER_METHOD";
+            default:
+                return "STEP";
+        }
+    }
+
+    private StartTestItemRQ getSuite(String suiteName, Map<String, String> metaData) {
         StartTestItemRQ rq = new StartTestItemRQ();
         rq.setName(suiteName);
         rq.setType("SUITE");
         rq.setStartTime(Calendar.getInstance().getTime());
+        if (metaData.containsKey("description") && metaData.get("description") != null) {
+            rq.setDescription(metaData.get("description"));
+        }
+        if (metaData.containsKey("tags")) {
+            rq.setAttributes(extractTags(metaData.get("tags")));
+        }
+
+
         return rq;
     }
 
