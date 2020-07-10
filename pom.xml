@@ -4,7 +4,7 @@
 
     <groupId>io.orangebeard</groupId>
     <artifactId>fitnesse-toolchain-listener</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
 
     <url>https://github.com/orangebeard-io/fitnesse-toolchain-listener</url>
     <name>Orangebeard.io Praegus Toolchain Report Portal Listener</name>
@@ -27,7 +27,7 @@
         <connection>scm:git:git@github.com:orangebeard-io/fitnesse-toolchain-listener.git</connection>
         <url>https://github.com/orangebeard-io/fitnesse-toolchain-listener.git</url>
         <developerConnection>scm:git:git@github.com:orangebeard-io/fitnesse-toolchain-listener.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>fitnesse-toolchain-listener-1.0.2</tag>
     </scm>
 
     <properties>
