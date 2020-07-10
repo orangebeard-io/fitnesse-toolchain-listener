@@ -21,13 +21,16 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(ImageEncoder.class)
 public class OrangebeardTableLogParserTest {
-    private static String TEST_HTML = "<html>\n" +
+    private final String TEST_HTML_WITH_IMAGES = "<html>\n" +
             "<body>\n" +
-            "<h1>test</h1>\n" +
-            "<p>bla\n" +
             "<img src=\"1.png\"/>\n" +
-            "</p>\n" +
             "<a href=\"#\"><img src=\"2.png\"/></a>\n" +
+            "</body>\n" +
+            "</html>";
+    private final String TEST_HTML_WITH_LINK = "<html>\n" +
+            "<body>\n" +
+            "<a href=\"http://hyperlink1\">this is link 1</a>\n" +
+            "<a href=\"http://hyperlink2\">this is link 2</a>\n" +
             "</body>\n" +
             "</html>";
 
@@ -52,9 +55,19 @@ public class OrangebeardTableLogParserTest {
                 }
             });
         } catch (Exception e) {}
-        String result = parser.embedImagesAndStripHyperlinks(TEST_HTML);
+        String result = parser.embedImagesAndStripHyperlinks(TEST_HTML_WITH_IMAGES);
         assertThat(result).contains("BASE64OF:" + "FitNesseRoot" + File.separator + "1.png");
         assertThat(result).contains("BASE64OF:" + "FitNesseRoot" + File.separator + "2.png");
+    }
+
+    @Test
+    public void hyperlinks_are_removed() {
+        String result = parser.embedImagesAndStripHyperlinks(TEST_HTML_WITH_LINK);
+        assertThat(result).doesNotContain("a href");
+        assertThat(result).doesNotContain("http://hyperlink1");
+        assertThat(result).doesNotContain("http://hyperlink2");
+        assertThat(result).contains("this is link 1");
+        assertThat(result).contains("this is link 2");
     }
 
 }

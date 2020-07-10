@@ -33,21 +33,41 @@ public class OrangebeardTableLogParser {
         return html;
     }
 
-    private String removeNonTableProlog(String html) {
+    public String removeNonTableProlog(String html) {
         if(html.toLowerCase().contains("<table")) {
             html = html.substring(html.indexOf("<table"), html.lastIndexOf("</table>") + 8);
         }
         return html;
     }
 
-    private String determineLogLevel(String logChunk) {
-        String level;
+    public String determineLogLevel(String logChunk) {
+        String level = "DEBUG";
         if(logChunk.contains("class=\"error\"") || logChunk.contains("class=\"fail\"")) {
             level = "ERROR";
-        } else {
+        }  else if (reportTable(removeNonTableProlog(logChunk))) {
             level = "INFO";
         }
         return level;
+    }
+
+    public String applyOrangebeardTableStyling(String table) {
+        table = table.replaceAll("class=\"fail\"", "style=\"background-color:#ffaeaf; padding: 3px; border-radius: 3px;\"");
+        table = table.replaceAll("class=\"pass\"", "style=\"background-color:#44ffa5; padding: 3px; border-radius: 3px;\"");
+        table = table.replaceAll("class=\"diff\"", "style=\"background-color:#f1e38f; padding: 3px; border-radius: 3px;\"");
+        table = table.replaceAll("class=\"ignore\"", "style=\"background-color:#a8e2ff; padding: 3px; border-radius: 3px;\"");
+        table = table.replaceAll("class=\"error\"", "style=\"background-color:#ffe67b; padding: 3px; border-radius: 3px;\"");
+        table = table.replaceAll("class=\"slimRowTitle\"", "style=\"font-weight:bold; background-color: #ececec;\"");
+        table = table.replaceAll("class=\"title\"", "style=\"font-size:1.2em; font-weight:bold; border-bottom:1px solid silver;\"");
+        table = table.replaceAll("class=\"toolchainTable [^\"]*\"", "style=\"box-shadow: 0px 3px 10px 0px rgba(0, 0, 0, 0.19);\"");
+        return table;
+    }
+
+    //Scenario's, templates, libraries and imports are debug info
+    private boolean reportTable(String tableBlock) {
+        return !tableBlock.startsWith("<table class=\"toolchainTable scenarioTable\"") &&
+                !tableBlock.startsWith("<table class=\"toolchainTable tableTemplate\"") &&
+                !tableBlock.startsWith("<table class=\"toolchainTable importTable\"") &&
+                !tableBlock.startsWith("<table class=\"toolchainTable libraryTable\"");
     }
 
 }
