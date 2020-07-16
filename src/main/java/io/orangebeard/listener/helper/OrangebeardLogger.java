@@ -1,4 +1,4 @@
-package io.orangebeard.testlisteners.fitnesse.helper;
+package io.orangebeard.listener.helper;
 
 import com.epam.reportportal.exception.InternalReportPortalClientException;
 import com.epam.reportportal.restendpoint.http.MultiPartRequest;

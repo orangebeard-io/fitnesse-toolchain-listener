@@ -1,4 +1,4 @@
-package io.orangebeard.testlisteners.fitnesse.helper;
+package io.orangebeard.listener.helper;
 
 import io.reactivex.Maybe;
 import io.reactivex.MaybeObserver;

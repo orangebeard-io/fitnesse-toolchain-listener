@@ -1,5 +1,7 @@
-package io.orangebeard.testlisteners.fitnesse.helper;
+package io.orangebeard.listener;
 
+import io.orangebeard.listener.helper.ImageEncoder;
+import io.orangebeard.listener.helper.OrangebeardTableLogParser;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
