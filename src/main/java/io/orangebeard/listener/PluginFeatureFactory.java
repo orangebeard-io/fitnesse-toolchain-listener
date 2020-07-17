@@ -1,11 +1,11 @@
-package io.orangebeard.testlisteners.fitnesse;
+package io.orangebeard.listener;
 
 import fitnesse.Responder;
 import fitnesse.plugins.PluginException;
 import fitnesse.plugins.PluginFeatureFactoryBase;
 import fitnesse.responders.ResponderFactory;
-import io.orangebeard.testlisteners.fitnesse.responders.run.OrangeBeardEnabledTestResponder;
-import io.orangebeard.testlisteners.fitnesse.responders.run.OrangebeardEnabledSuiteResponder;
+import io.orangebeard.listener.responders.run.OrangeBeardEnabledTestResponder;
+import io.orangebeard.listener.responders.run.OrangebeardEnabledSuiteResponder;
 
 public class PluginFeatureFactory extends PluginFeatureFactoryBase {
     @Override

@@ -1,7 +1,9 @@
 package io.orangebeard.listener;
 
+import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
+import com.epam.reportportal.utils.properties.PropertiesLoader;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
@@ -52,7 +54,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static io.orangebeard.testlisteners.fitnesse.helper.TestPageHelper.*;
+import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
@@ -123,7 +125,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         startLaunchIfRequired(testPage);
 
         Maybe<String> suiteId = getAndOrStartSuite(testPage);
-        String testName = TestPageHelper.getTestName(testPage);
+        String testName = getTestName(testPage);
 
         StartTestItemRQ startTestItemRQ = getTest(testPage);
         Maybe<String> id = launch.startTestItem(suiteId, startTestItemRQ);
@@ -152,10 +154,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testComplete(TestPage testPage, TestSummary testSummary) {
         String testName = getTestName(testPage);
-        if (context.hasTest(testName)) {
+        if (runContext.hasTest(testName)) {
             logger.info("[Orangebeard] test {} finished", getTestName(testPage));
             FinishTestItemRQ rq = getFinishTestItemRQ(testResult(testSummary));
-            Maybe<String> testId = context.getTestId(getTestName(testPage));
+            Maybe<String> testId = runContext.getTestId(getTestName(testPage));
             launch.finishTestItem(testId, rq);
             runContext.remove(testName);
         }
@@ -295,6 +297,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
     }
 
+    @SneakyThrows
     private Set<ItemAttributesRQ> getLauchAttributes() {
         Set<ItemAttributesRQ> tags = new HashSet<>();
         tags.addAll(extractTags(System.getProperty(PROP_TAGS)));
@@ -400,7 +403,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private StartTestItemRQ getTest(TestPage testPage) {
         StartTestItemRQ startTestItemRQ = new StartTestItemRQ();
         startTestItemRQ.setStartTime(Date.from(Instant.now()));
-        startTestItemRQ.setName(TestPageHelper.getTestName(testPage));
+        startTestItemRQ.setName(getTestName(testPage));
         startTestItemRQ.setType(determinePageType(testPage.getName()));
         startTestItemRQ.setUniqueId(UUID.randomUUID().toString());
 
