@@ -1,4 +1,4 @@
-package io.orangebeard.testlisteners.fitnesse.helper;
+package io.orangebeard.listener.helper;
 
 import fitnesse.testsystems.TestPage;
 

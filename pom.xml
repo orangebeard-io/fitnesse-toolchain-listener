@@ -8,13 +8,13 @@
     <version>1.0.3-SNAPSHOT</version>
 
     <url>https://github.com/orangebeard-io/fitnesse-toolchain-listener</url>
-    <name>Orangebeard.io Praegus Toolchain Report Portal Listener</name>
+    <name>Orangebeard.io FitNesse Toolchain Listener</name>
     <description>Send FitNesse results to an Orangebeard.io instance</description>
 
     <developers>
         <developer>
             <name>Maarten-Jan van Gool</name>
-            <email>maarten-janl@orangebeard.io</email>
+            <email>maarten-jan@orangebeard.io</email>
             <organizationUrl>https://orangebeard.io</organizationUrl>
         </developer>
         <developer>

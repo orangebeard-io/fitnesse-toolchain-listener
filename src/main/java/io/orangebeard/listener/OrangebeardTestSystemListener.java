@@ -1,9 +1,7 @@
-package io.orangebeard.testlisteners.fitnesse;
+package io.orangebeard.listener;
 
-import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
-import com.epam.reportportal.utils.properties.PropertiesLoader;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
@@ -26,9 +24,10 @@ import fitnesse.testsystems.TestSystem;
 import fitnesse.testsystems.TestSystemListener;
 import fitnesse.wiki.PageData;
 import fitnesse.wiki.WikiPageProperty;
-import io.orangebeard.testlisteners.fitnesse.helper.OrangebeardLogger;
-import io.orangebeard.testlisteners.fitnesse.helper.OrangebeardTableLogParser;
-import io.orangebeard.testlisteners.fitnesse.helper.ToolchainRunningContext;
+import io.orangebeard.listener.helper.OrangebeardLogger;
+import io.orangebeard.listener.helper.OrangebeardTableLogParser;
+import io.orangebeard.listener.helper.TestPageHelper;
+import io.orangebeard.listener.helper.ToolchainRunningContext;
 import io.reactivex.Maybe;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -53,8 +52,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static io.orangebeard.testlisteners.fitnesse.helper.TestPageHelper.getFullSuiteName;
-import static io.orangebeard.testlisteners.fitnesse.helper.TestPageHelper.getTestName;
+import static io.orangebeard.testlisteners.fitnesse.helper.TestPageHelper.*;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
@@ -125,7 +123,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         startLaunchIfRequired(testPage);
 
         Maybe<String> suiteId = getAndOrStartSuite(testPage);
-        String testName = getTestName(testPage);
+        String testName = TestPageHelper.getTestName(testPage);
 
         StartTestItemRQ startTestItemRQ = getTest(testPage);
         Maybe<String> id = launch.startTestItem(suiteId, startTestItemRQ);
@@ -154,10 +152,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testComplete(TestPage testPage, TestSummary testSummary) {
         String testName = getTestName(testPage);
-        if (runContext.hasTest(testName)) {
+        if (context.hasTest(testName)) {
             logger.info("[Orangebeard] test {} finished", getTestName(testPage));
             FinishTestItemRQ rq = getFinishTestItemRQ(testResult(testSummary));
-            Maybe<String> testId = runContext.getTestId(getTestName(testPage));
+            Maybe<String> testId = context.getTestId(getTestName(testPage));
             launch.finishTestItem(testId, rq);
             runContext.remove(testName);
         }
@@ -205,7 +203,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private Maybe<String> getAndOrStartSuite(TestPage testPage) {
-        String fullSuiteName = getFullSuiteName(testPage);
+        String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
         String[] suites = fullSuiteName.split("\\.");
         String suitePath = "";
         Maybe<String> suiteId = null;
@@ -297,7 +295,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
     }
 
-    @SneakyThrows
     private Set<ItemAttributesRQ> getLauchAttributes() {
         Set<ItemAttributesRQ> tags = new HashSet<>();
         tags.addAll(extractTags(System.getProperty(PROP_TAGS)));
@@ -403,7 +400,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private StartTestItemRQ getTest(TestPage testPage) {
         StartTestItemRQ startTestItemRQ = new StartTestItemRQ();
         startTestItemRQ.setStartTime(Date.from(Instant.now()));
-        startTestItemRQ.setName(getTestName(testPage));
+        startTestItemRQ.setName(TestPageHelper.getTestName(testPage));
         startTestItemRQ.setType(determinePageType(testPage.getName()));
         startTestItemRQ.setUniqueId(UUID.randomUUID().toString());
 
