@@ -1,4 +1,4 @@
-package io.orangebeard.testlisteners.fitnesse.helper;
+package io.orangebeard.listener.helper;
 
 import java.io.File;
 import java.io.FileInputStream;

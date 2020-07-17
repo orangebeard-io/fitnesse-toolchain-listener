@@ -1,4 +1,4 @@
-package io.orangebeard.testlisteners.fitnesse;
+package io.orangebeard.listener;
 
 import fitnesse.junit.DescriptionFactory;
 import fitnesse.testrunner.MultipleTestsRunner;

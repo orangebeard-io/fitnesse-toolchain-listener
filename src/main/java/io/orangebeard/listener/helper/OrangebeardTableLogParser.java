@@ -1,13 +1,10 @@
-package io.orangebeard.testlisteners.fitnesse.helper;
+package io.orangebeard.listener.helper;
 
 import nl.hsac.fitnesse.fixture.Environment;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
