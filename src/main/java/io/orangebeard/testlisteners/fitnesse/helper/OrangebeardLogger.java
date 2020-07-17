@@ -10,14 +10,12 @@ import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.google.common.io.Files;
 import io.reactivex.Maybe;
 import net.lingala.zip4j.ZipFile;
-import nl.hsac.fitnesse.fixture.Environment;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -26,27 +24,17 @@ import java.util.regex.Pattern;
 import static java.util.Collections.singletonList;
 
 public class OrangebeardLogger {
-    private static final String SCREENSHOT_EXT = "png";
-    private static final String PAGESOURCE_EXT = "html";
-    private static List<Pattern> patterns = Arrays.asList(Pattern.compile("href=\"([^\"]*." + SCREENSHOT_EXT + ")\""),
-            Pattern.compile("href=\"([^\"]*." + PAGESOURCE_EXT + ")\"")
-    );
-
-    private static Pattern attachmentPattern = Pattern.compile("href=\"([^\"]*)\"");
+    private static final Pattern attachmentPattern = Pattern.compile("href=\"([^\"]*)\"");
 
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(OrangebeardLogger.class);
-    private Environment environment;
-    private ReportPortal reportPortal;
+
+    private final ReportPortal reportPortal;
+    private final String rootPath;
 
 
-    public OrangebeardLogger(ReportPortal reportPortal) {
+    public OrangebeardLogger(ReportPortal reportPortal, String rootPath) {
         this.reportPortal = reportPortal;
-        this.environment = Environment.getInstance();
-    }
-
-    public OrangebeardLogger(ReportPortal reportPortal, Environment environment) {
-        this.reportPortal = reportPortal;
-        this.environment = environment;
+        this.rootPath = rootPath;
     }
 
     public void sendLogData(String testId, String launchId, String chunk, String level) {
@@ -85,15 +73,6 @@ public class OrangebeardLogger {
         }
     }
 
-    private String getStackTraceString(Throwable e) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < e.getStackTrace().length; i++) {
-            result.append(e.getStackTrace()[i]);
-            result.append(System.getProperty("line.separator"));
-        }
-        return result.toString();
-    }
-
     private void saveLog(SaveLogRQ saveLogRQ) {
         Maybe<EntryCreatedAsyncRS> logItem = reportPortal.getClient().log(saveLogRQ);
         try {
@@ -107,7 +86,8 @@ public class OrangebeardLogger {
         Matcher attachments = attachmentPattern.matcher(message);
         while (attachments.find()) {
             if (!attachments.group(1).startsWith("http://") && !attachments.group(1).startsWith("https://")) {
-                String filePath = new File(environment.getFitNesseRootDir(), attachments.group(1)).getPath();
+
+                String filePath = new File(rootPath, attachments.group(1)).getAbsolutePath();
                 try {
                     String fileName = new File(filePath).getName();
                     SaveLogRQ.File attachmentFile = new SaveLogRQ.File();
@@ -124,7 +104,7 @@ public class OrangebeardLogger {
     public void attachFitNesseResultsToRun(String launchId) {
         try {
             ZipFile testReportBundle = new ZipFile("FitNesseResults.zip");
-            testReportBundle.addFolder(new File(Environment.getInstance().getFitNesseRootDir()));
+            testReportBundle.addFolder(new File(rootPath));
             FileInputStream zipStr = new FileInputStream(testReportBundle.getFile());
             byte[] zippedReport = IOUtils.toByteArray(zipStr);
             SaveLogRQ.File zipFile = new SaveLogRQ.File();
