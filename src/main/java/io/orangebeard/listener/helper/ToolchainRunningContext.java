@@ -12,10 +12,9 @@ import java.util.UUID;
 public class ToolchainRunningContext {
 
     private final UUID testRun;
-    private HashMap<String, UUID> tests = new HashMap<>();
-    private HashMap<String, UUID> suites = new HashMap<>();
+    private final HashMap<String, UUID> tests = new HashMap<>();
+    private final HashMap<String, UUID> suites = new HashMap<>();
     private String latestTest;
-    private String testSystemName;
 
     public ToolchainRunningContext(UUID testRunId) {
         testRun = testRunId;
@@ -56,13 +55,5 @@ public class ToolchainRunningContext {
 
     public String getLatestTestName() {
         return latestTest;
-    }
-
-    public String getTestSystemName() {
-        return testSystemName;
-    }
-
-    public void setTestSystemName(String testSystemName) {
-        this.testSystemName = testSystemName;
     }
 }

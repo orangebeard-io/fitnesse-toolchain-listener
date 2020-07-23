@@ -128,9 +128,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         );
 
         runContext = new ToolchainRunningContext(orangebeard.startTestRun(testrun));
-        if (testSystemName != null) {
-            runContext.setTestSystemName(testSystemName);
-        }
     }
 
     @Override

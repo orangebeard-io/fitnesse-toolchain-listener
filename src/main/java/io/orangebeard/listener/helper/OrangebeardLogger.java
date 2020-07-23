@@ -5,15 +5,12 @@ import io.orangebeard.client.entity.Attachment;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.LogLevel;
 import net.lingala.zip4j.ZipFile;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.FileSystemResource;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
