@@ -7,7 +7,7 @@ import fitnesse.responders.ResponderFactory;
 import io.orangebeard.listener.responders.run.OrangeBeardEnabledTestResponder;
 import io.orangebeard.listener.responders.run.OrangebeardEnabledSuiteResponder;
 
-public class PluginFeatureFactory extends PluginFeatureFactoryBase {
+public class OrangebeardPluginFeatureFactory extends PluginFeatureFactoryBase {
     @Override
     public void registerResponders(ResponderFactory responderFactory) throws PluginException {
         super.registerResponders(responderFactory);

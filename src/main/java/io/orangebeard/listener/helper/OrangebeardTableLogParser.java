@@ -1,5 +1,6 @@
 package io.orangebeard.listener.helper;
 
+import io.orangebeard.client.entity.LogLevel;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -20,7 +21,7 @@ public class OrangebeardTableLogParser {
             String img = rootPath + "/" + src;
             File imageFile = new File(img);
             try {
-            html = html.replace(imgMatcher.group(), "<img src=\"data:image/png;base64," + ImageEncoder.encode(imageFile) + "\" width=\"200\" onClick=\"openImage(this)\">");
+                html = html.replace(imgMatcher.group(), "<img src=\"data:image/png;base64," + ImageEncoder.encode(imageFile) + "\" width=\"200\" onClick=\"openImage(this)\">");
             } catch (IOException ioe) {
                 logger.error("Exception while reading the Image", ioe);
             }
@@ -29,18 +30,18 @@ public class OrangebeardTableLogParser {
     }
 
     public String removeNonTableProlog(String html) {
-        if(html.toLowerCase().contains("<table")) {
+        if (html.toLowerCase().contains("<table")) {
             html = html.substring(html.indexOf("<table"), html.lastIndexOf("</table>") + 8);
         }
         return html;
     }
 
-    public String determineLogLevel(String logChunk) {
-        String level = "DEBUG";
-        if(logChunk.contains("class=\"error\"") || logChunk.contains("class=\"fail\"")) {
-            level = "ERROR";
-        }  else if (reportTable(removeNonTableProlog(logChunk))) {
-            level = "INFO";
+    public LogLevel determineLogLevel(String logChunk) {
+        LogLevel level = LogLevel.debug;
+        if (logChunk.contains("class=\"error\"") || logChunk.contains("class=\"fail\"")) {
+            level = LogLevel.error;
+        } else if (reportTable(removeNonTableProlog(logChunk))) {
+            level = LogLevel.info;
         }
         return level;
     }

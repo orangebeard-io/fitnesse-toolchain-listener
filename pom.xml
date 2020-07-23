@@ -41,17 +41,6 @@
         <rp.model.version>5.0.0</rp.model.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>bintray</id>
-            <url>http://dl.bintray.com/epam/reportportal</url>
-        </repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>org.fitnesse</groupId>
@@ -66,29 +55,14 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.epam.reportportal</groupId>
-            <artifactId>client-java</artifactId>
-            <version>${rp.java-client.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.epam.reportportal</groupId>
-            <artifactId>commons-model</artifactId>
-            <version>${rp.model.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>28.2-jre</version>
+            <groupId>io.orangebeard</groupId>
+            <artifactId>java-client</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.http-client</groupId>
-            <artifactId>google-http-client</artifactId>
-            <version>1.35.0</version>
         </dependency>
         <dependency>
             <groupId>net.lingala.zip4j</groupId>

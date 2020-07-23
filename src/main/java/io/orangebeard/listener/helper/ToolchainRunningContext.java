@@ -1,28 +1,36 @@
 package io.orangebeard.listener.helper;
 
-import io.reactivex.Maybe;
-import io.reactivex.MaybeObserver;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Parallel execution context and set of operations to interact with it
  */
+
 public class ToolchainRunningContext {
 
-    private HashMap<String, Maybe<String>> tests = new HashMap<>();
-    private HashMap<String, Maybe<String>> suites = new HashMap<>();
+    private final UUID testRun;
+    private HashMap<String, UUID> tests = new HashMap<>();
+    private HashMap<String, UUID> suites = new HashMap<>();
     private String latestTest;
     private String testSystemName;
 
-    public void addTest(String testName, Maybe<String> id) {
+    public ToolchainRunningContext(UUID testRunId) {
+        testRun = testRunId;
+    }
+
+    public UUID getTestRun() {
+        return testRun;
+    }
+
+    public void addTest(String testName, UUID id) {
         tests.put(testName, id);
         latestTest = testName;
     }
 
-    public Maybe<String> getTestId(String testName) {
+    public UUID getTestId(String testName) {
         return tests.get(testName);
     }
 
@@ -34,15 +42,15 @@ public class ToolchainRunningContext {
         return tests.containsKey(testName);
     }
 
-    public Maybe<String> getSuiteId(String fullSuiteName) {
+    public UUID getSuiteId(String fullSuiteName) {
         return suites.get(fullSuiteName);
     }
 
-    public void addSuite(String fullSuiteName, Maybe<String> suiteId) {
+    public void addSuite(String fullSuiteName, UUID suiteId) {
         suites.put(fullSuiteName, suiteId);
     }
 
-    public List<Maybe<String>> getAllSuiteIds() {
+    public List<UUID> getAllSuiteIds() {
         return new ArrayList<>(suites.values());
     }
 
