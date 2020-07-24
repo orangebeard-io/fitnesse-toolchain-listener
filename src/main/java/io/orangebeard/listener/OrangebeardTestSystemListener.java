@@ -46,7 +46,7 @@ import static java.util.Objects.requireNonNull;
 
 @NoArgsConstructor
 public class OrangebeardTestSystemListener implements TestSystemListener, Closeable {
-    private String PROPERTY_FILE_NAME = "orangebeard.properties";
+    private String propertyFileName = "orangebeard.properties";
     private static final String PROP_ROOT_PATH = "fitnesseroot.path";
 
     private OrangebeardClient orangebeardClient;
@@ -59,23 +59,15 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private boolean local = false;
 
-
-    public OrangebeardTestSystemListener(@Nullable String propertyFile) {
-        if (propertyFile != null) {
-            PROPERTY_FILE_NAME = propertyFile;
-        }
-        rootPath = getFitnesseRootPath();
-    }
-
-    public OrangebeardTestSystemListener(@Nullable String propertyFile, String rootPath) {
-        if (propertyFile != null) {
-            PROPERTY_FILE_NAME = propertyFile;
+    public OrangebeardTestSystemListener(@Nullable String propertyFileName, String rootPath) {
+        if (propertyFileName != null) {
+            this.propertyFileName = propertyFileName;
         }
         this.rootPath = rootPath;
     }
 
-    public OrangebeardTestSystemListener(String propertyFile, boolean local) {
-        this(propertyFile);
+    public OrangebeardTestSystemListener(String propertyFileName, boolean local) {
+        this.propertyFileName = propertyFileName;
         this.local = local;
     }
 
@@ -266,7 +258,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         String rootPath = System.getProperty(PROP_ROOT_PATH);
         if (rootPath == null) {
             try {
-                propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.PROPERTY_FILE_NAME)));
+                propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.propertyFileName)));
                 rootPath = propertyFile.getProperty(PROP_ROOT_PATH) != null ? propertyFile.getProperty(PROP_ROOT_PATH) : defaultRoot;
             } catch (NullPointerException | IOException e) {
                 rootPath = defaultRoot;

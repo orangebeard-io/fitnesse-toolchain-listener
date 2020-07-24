@@ -5,11 +5,11 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Base64;
 
-import static java.awt.RenderingHints.*;
+import static java.awt.RenderingHints.KEY_INTERPOLATION;
+import static java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC;
 
 public class ImageEncoder {
 
