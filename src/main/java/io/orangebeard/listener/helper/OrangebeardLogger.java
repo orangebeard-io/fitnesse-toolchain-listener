@@ -53,7 +53,7 @@ public class OrangebeardLogger {
                     .testRunUUID(testRunId)
                     .time(LocalDateTime.now());
 
-            orangebeard.attachment(attachment.build());
+            orangebeard.sendAttachment(attachment.build());
         } catch (IOException e) {
             logger.error("Could not read file: " + file.getAbsolutePath());
         }
