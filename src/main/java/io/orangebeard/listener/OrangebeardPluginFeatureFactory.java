@@ -1,10 +1,11 @@
 package io.orangebeard.listener;
 
+import io.orangebeard.listener.responders.run.OrangebeardEnabledSuiteResponder;
+import io.orangebeard.listener.responders.run.OrangebeardEnabledTestResponder;
+
 import fitnesse.plugins.PluginException;
 import fitnesse.plugins.PluginFeatureFactoryBase;
 import fitnesse.responders.ResponderFactory;
-import io.orangebeard.listener.responders.run.OrangebeardEnabledTestResponder;
-import io.orangebeard.listener.responders.run.OrangebeardEnabledSuiteResponder;
 
 public class OrangebeardPluginFeatureFactory extends PluginFeatureFactoryBase {
     @Override

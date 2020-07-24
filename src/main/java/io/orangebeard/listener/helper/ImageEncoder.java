@@ -23,7 +23,7 @@ public class ImageEncoder {
     }
 
     public static BufferedImage resizeImage(final Image image, int width, int height) {
-        double ratio = (double) image.getWidth(null)/(double) image.getHeight(null);
+        double ratio = (double) image.getWidth(null) / (double) image.getHeight(null);
         if (width < 1 && height < 1) {
             throw new IllegalArgumentException("Width or height must be larger than 0!");
         }
@@ -37,7 +37,7 @@ public class ImageEncoder {
         Graphics2D g2d = resizedImage.createGraphics();
         g2d.setComposite(AlphaComposite.Src);
         g2d.setRenderingHint(KEY_INTERPOLATION, VALUE_INTERPOLATION_BICUBIC);
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.drawImage(image, 0, 0, width, height, null);
         g2d.dispose();
 

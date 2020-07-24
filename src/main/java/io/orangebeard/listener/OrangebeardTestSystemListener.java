@@ -1,15 +1,5 @@
 package io.orangebeard.listener;
 
-import fitnesse.testrunner.WikiTestPage;
-import fitnesse.testsystems.Assertion;
-import fitnesse.testsystems.ExceptionResult;
-import fitnesse.testsystems.TestPage;
-import fitnesse.testsystems.TestResult;
-import fitnesse.testsystems.TestSummary;
-import fitnesse.testsystems.TestSystem;
-import fitnesse.testsystems.TestSystemListener;
-import fitnesse.wiki.PageData;
-import fitnesse.wiki.WikiPageProperty;
 import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.entity.Attribute;
@@ -24,8 +14,6 @@ import io.orangebeard.listener.helper.OrangebeardLogger;
 import io.orangebeard.listener.helper.OrangebeardTableLogParser;
 import io.orangebeard.listener.helper.TestPageHelper;
 import io.orangebeard.listener.helper.ToolchainRunningContext;
-import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
 
 import javax.annotation.Nullable;
 import java.io.Closeable;
@@ -40,7 +28,21 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import fitnesse.testrunner.WikiTestPage;
+import fitnesse.testsystems.Assertion;
+import fitnesse.testsystems.ExceptionResult;
+import fitnesse.testsystems.TestPage;
+import fitnesse.testsystems.TestResult;
+import fitnesse.testsystems.TestSummary;
+import fitnesse.testsystems.TestSystem;
+import fitnesse.testsystems.TestSystemListener;
+import fitnesse.wiki.PageData;
+import fitnesse.wiki.WikiPageProperty;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 
+import static io.orangebeard.client.entity.Status.FAILED;
+import static io.orangebeard.client.entity.Status.PASSED;
 import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
 import static java.util.Objects.requireNonNull;
 
@@ -54,7 +56,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private ToolchainRunningContext runContext;
 
     private String rootPath = getFitnesseRootPath();
-    private final OrangebeardTableLogParser htmlChunkParser = new OrangebeardTableLogParser();
     private OrangebeardLogger orangebeardLogger;
 
     private boolean local = false;
@@ -73,45 +74,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     @Override
     public void testSystemStarted(TestSystem testSystem) {
-        startTestRun(testSystem.getName());
-    }
-
-    @Override
-    public void testOutputChunk(String s) {
-        UUID testId = runContext.getTestId(runContext.getLatestTestName());
-
-        if (s.toLowerCase().contains("<table")) {
-            s = htmlChunkParser.removeNonTableProlog(s);
-            s = htmlChunkParser.applyOrangebeardTableStyling(s);
-        }
-
-        String enrichedLog = htmlChunkParser.embedImagesAndStripHyperlinks(s, rootPath);
-
-        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-        enrichedLog = enrichedLog.replaceAll("\u0000", "");
-
-        Log logItem = Log.builder()
-                .message(enrichedLog)
-                .itemUuid(testId)
-                .testRunUUID(runContext.getTestRun())
-                .logLevel(htmlChunkParser.determineLogLevel(enrichedLog))
-                .time(LocalDateTime.now())
-                .build();
-
-        orangebeardClient.log(logItem);
-        orangebeardLogger.attachFilesIfPresent(testId, runContext.getTestRun(), s);
-    }
-
-    @Override
-    public void testStarted(TestPage testPage) {
-        UUID suiteId = getAndOrStartSuite(testPage);
-        StartTestItem testItem = getStartTestItem(testPage);
-        UUID testId = orangebeardClient.startTestItem(suiteId, testItem);
-
-        runContext.addTest(getTestName(testPage), testId);
-    }
-
-    private void startTestRun(String testSystemName) {
         orangebeardProperties.checkPropertiesArePresent();
         this.orangebeardClient = new OrangebeardClient(
                 orangebeardProperties.getEndpoint(),
@@ -125,10 +87,45 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         StartTestRun testrun = new StartTestRun(
                 orangebeardProperties.getTestSetName(),
                 orangebeardProperties.getDescription(),
-                getTestRunAttributes(testSystemName)
+                getTestRunAttributes(testSystem.getName())
         );
 
         runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testrun));
+    }
+
+    @Override
+    public void testOutputChunk(String chunk) {
+        UUID testId = runContext.getTestId(runContext.getLatestTestName());
+
+        if (chunk.toLowerCase().contains("<table")) {
+            chunk = OrangebeardTableLogParser.removeNonTableProlog(chunk);
+            chunk = OrangebeardTableLogParser.applyOrangebeardTableStyling(chunk);
+        }
+
+        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(chunk, rootPath);
+
+        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
+        enrichedLog = enrichedLog.replaceAll("\u0000", "");
+
+        Log logItem = Log.builder()
+                .message(enrichedLog)
+                .itemUuid(testId)
+                .testRunUUID(runContext.getTestRun())
+                .logLevel(OrangebeardTableLogParser.getLogLevel(enrichedLog))
+                .time(LocalDateTime.now())
+                .build();
+
+        orangebeardClient.log(logItem);
+        orangebeardLogger.attachFilesIfPresent(testId, runContext.getTestRun(), chunk);
+    }
+
+    @Override
+    public void testStarted(TestPage testPage) {
+        UUID suiteId = getAndOrStartSuite(testPage);
+        StartTestItem testItem = getStartTestItem(testPage);
+        UUID testId = orangebeardClient.startTestItem(suiteId, testItem);
+
+        runContext.addTest(getTestName(testPage), testId);
     }
 
     @Override
@@ -173,9 +170,9 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private Status testResult(TestSummary testSummary) {
         if (testSummary.getExceptions() > 0 || testSummary.getWrong() > 0) {
-            return Status.FAILED;
+            return FAILED;
         } else {
-            return Status.PASSED;
+            return PASSED;
         }
     }
 
@@ -227,7 +224,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         orangebeardClient.finishTestItem(suiteId, item);
     }
 
-
     @SneakyThrows
     private Set<Attribute> getTestRunAttributes(String testSystemName) {
         Set<Attribute> tags = new HashSet<>(orangebeardProperties.getAttributes());
@@ -238,7 +234,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
         return tags;
     }
-
 
     private Set<Attribute> extractTags(String propTags) {
         if (propTags != null) {
@@ -267,14 +262,12 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return rootPath;
     }
 
-
     private StartTestItem getStartTestItem(TestPage testPage) {
         StartTestItem.StartTestItemBuilder testItem = StartTestItem.builder()
                 .testRunUUID(runContext.getTestRun())
                 .startTime(LocalDateTime.now())
                 .name(getTestName(testPage))
                 .type(determinePageType(testPage.getName()));
-
 
         if (testPage instanceof WikiTestPage) {
             PageData pageData = ((WikiTestPage) testPage).getData();

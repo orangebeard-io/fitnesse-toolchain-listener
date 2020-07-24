@@ -2,17 +2,14 @@ package io.orangebeard.listener;
 
 import io.orangebeard.listener.helper.ImageEncoder;
 import io.orangebeard.listener.helper.OrangebeardTableLogParser;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 
 import java.io.File;
-import java.io.IOException;
-
+import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,5 +60,4 @@ public class OrangebeardTableLogParserTest {
         assertThat(result).contains("this is link 1");
         assertThat(result).contains("this is link 2");
     }
-
 }
