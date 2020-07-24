@@ -105,7 +105,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     public void testStarted(TestPage testPage) {
         UUID suiteId = getAndOrStartSuite(testPage);
         StartTestItem testItem = getStartTestItem(testPage);
-        UUID testId = orangebeard.startTest(suiteId, testItem);
+        UUID testId = orangebeard.startTestItem(suiteId, testItem);
 
         runContext.addTest(getTestName(testPage), testId);
     }
@@ -212,7 +212,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private UUID startSuite(UUID parentId, String shortName, Set<Attribute> attributes) {
         StartTestItem suite = new StartTestItem(runContext.getTestRun(), shortName, TestItemType.SUITE, null, attributes);
-        return orangebeard.startSuite(parentId, suite);
+        return orangebeard.startTestItem(parentId, suite);
     }
 
     private void stopAllSuites() {

@@ -57,7 +57,7 @@
         <dependency>
             <groupId>io.orangebeard</groupId>
             <artifactId>java-client</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+            <version>1.0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
