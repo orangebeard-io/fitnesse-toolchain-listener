@@ -36,7 +36,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <fitnesse.version>20200501</fitnesse.version>
-        <hsac.version>4.15.3</hsac.version>
+        <hsac.version>4.16.0</hsac.version>
         <rp.java-client.version>5.0.2</rp.java-client.version>
         <rp.model.version>5.0.0</rp.model.version>
     </properties>
@@ -57,7 +57,7 @@
         <dependency>
             <groupId>io.orangebeard</groupId>
             <artifactId>java-client</artifactId>
-            <version>1.0.6-SNAPSHOT</version>
+            <version>1.0.6</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

@@ -187,7 +187,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             suitePath = suitePath + "." + suite;
             suiteId = runContext.getSuiteId(suitePath);
             if (suiteId == null) {
-                Set<Attribute> suiteAttrs = retrieveSuiteMetaData(testPage);
+                Set<Attribute> suiteAttrs = null;
+                if(suitePath.endsWith(fullSuiteName)) {
+                     suiteAttrs = retrieveSuiteMetaData(testPage);
+                }
                 suiteId = startSuite(parentSuiteId, suite, suiteAttrs);
                 runContext.addSuite(suitePath, suiteId);
             }
@@ -202,7 +205,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
             PageData suitePageData = ((WikiTestPage) testPage).getSourcePage().getParent().getData();
             if (suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
-                metaData.add(new Attribute("tags", suitePageData.getAttribute(WikiPageProperty.SUITES)));
+                metaData.addAll(extractTags(suitePageData.getAttribute(WikiPageProperty.SUITES)));
             }
         }
         return metaData;
