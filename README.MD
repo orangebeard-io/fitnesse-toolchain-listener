@@ -2,7 +2,24 @@
 
 A test output listener for Praegus Open Source Toolchain FitNesse tests.
 
+<p align="center">
+<img src="https://raw.githubusercontent.com/orangebeard-io/fitnesse-toolchain-listener/master/.github/logo.svg" alt="Orangebeard.io Java Client" height="200"><br />
+  <a href="https://repo.maven.apache.org/maven2/io/orangebeard/fitnesse-toolchain-listener/">
+    <img src="https://img.shields.io/maven-central/v/io.orangebeard/fitnesse-toolchain-listener.svg?maxAge=3600&style=flat-square"
+      alt="MVN Version" />
+  </a>
+  <a href="https://github.com/orangebeard-io/fitnesse-toolchain-listener/actions">
+    <img src="https://img.shields.io/github/workflow/status/orangebeard-io/fitnesse-toolchain-listener/release?style=flat-square"
+      alt="Build Status" />
+  </a>
+  <a href="https://github.com/orangebeard-io/fitnesse-toolchain-listener/blob/master/LICENSE.txt">
+    <img src="https://img.shields.io/github/license/orangebeard-io/fitnesse-toolchain-listener?style=flat-square"
+      alt="License" />
+  </a>
+</p>
+
 ## Installation
+
 [![Maven Central](https://img.shields.io/maven-central/v/io.orangebeard/fitnesse-toolchain-listener.svg?maxAge=3600)](https://mvnrepository.com/artifact/io.orangebeard/fitnesse-toolchain-listener)
 
  ### 1. Add dependency
