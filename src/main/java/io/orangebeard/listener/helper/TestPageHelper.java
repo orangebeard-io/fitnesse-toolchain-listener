@@ -16,9 +16,9 @@ public class TestPageHelper {
         return testPage.getName();
     }
 
-    public static String getFullSuiteName (TestPage testPage) {
+    public static String getFullSuiteName(TestPage testPage) {
         String fullTestName = getFullTestName(testPage);
-        if(fullTestName.contains(".")) {
+        if (fullTestName.contains(".")) {
             return fullTestName.substring(0, fullTestName.lastIndexOf("."));
         } else {
             return "default";

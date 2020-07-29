@@ -2,17 +2,14 @@ package io.orangebeard.listener;
 
 import io.orangebeard.listener.helper.ImageEncoder;
 import io.orangebeard.listener.helper.OrangebeardTableLogParser;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 
 import java.io.File;
-import java.util.UUID;
-
+import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,40 +33,31 @@ public class OrangebeardTableLogParserTest {
             "</body>\n" +
             "</html>";
 
-    private OrangebeardTableLogParser parser = new OrangebeardTableLogParser();
-
-    private String randomStr() {
-       return UUID.randomUUID().toString();
-    }
+    private final OrangebeardTableLogParser parser = new OrangebeardTableLogParser();
 
     @Test
-    public void multiple_images_can_be_replaced() {
+    public void multiple_images_can_be_replaced() throws Exception {
         PowerMockito.mockStatic(ImageEncoder.class);
 
-        try {
-            File file = mock(File.class);
-            PowerMockito.whenNew(File.class).withArguments(anyString()).thenReturn(file);
-            when(ImageEncoder.encode(any())).thenAnswer(new Answer<String>() {
-                @Override
-                public String answer(InvocationOnMock invocation) throws Throwable {
-                    Object[] args = invocation.getArguments();
-                    return "BASE64OF:" + args[0].toString();
-                }
-            });
-        } catch (Exception e) {}
-        String result = parser.embedImagesAndStripHyperlinks(TEST_HTML_WITH_IMAGES);
-        assertThat(result).contains("BASE64OF:" + "FitNesseRoot" + File.separator + "1.png");
-        assertThat(result).contains("BASE64OF:" + "FitNesseRoot" + File.separator + "2.png");
+        File file = mock(File.class);
+        PowerMockito.whenNew(File.class).withArguments(anyString()).thenReturn(file);
+        when(ImageEncoder.encodeForEmbedding(any())).thenAnswer((Answer<String>) invocation -> {
+            Object[] args = invocation.getArguments();
+            return "BASE64OF:" + args[0].toString();
+        });
+
+        String result = parser.embedImagesAndStripHyperlinks(TEST_HTML_WITH_IMAGES, "");
+        assertThat(result).contains("BASE64OF:" + File.separator + "1.png");
+        assertThat(result).contains("BASE64OF:" + File.separator + "2.png");
     }
 
     @Test
     public void hyperlinks_are_removed() {
-        String result = parser.embedImagesAndStripHyperlinks(TEST_HTML_WITH_LINK);
+        String result = parser.embedImagesAndStripHyperlinks(TEST_HTML_WITH_LINK, "");
         assertThat(result).doesNotContain("a href");
         assertThat(result).doesNotContain("http://hyperlink1");
         assertThat(result).doesNotContain("http://hyperlink2");
         assertThat(result).contains("this is link 1");
         assertThat(result).contains("this is link 2");
     }
-
 }
