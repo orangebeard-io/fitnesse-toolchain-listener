@@ -1,9 +1,13 @@
-# Orangebeard.io FitNesse TestSystemListener
+<h1 align="center">
+  <a href="https://github.com/orangebeard-io/fitnesse-toolchain-listener">
+    <img src="https://raw.githubusercontent.com/orangebeard-io/fitnesse-toolchain-listener/master/.github/logo.svg" alt="Orangebeard.io FitNesse TestSystemListener" height="200">
+  </a>
+  <br>Orangebeard.io FitNesse TestSystemListener<br>
+</h1>
 
-A test output listener for Praegus Open Source Toolchain FitNesse tests.
+<h4 align="center">A test output listener for Praegus Open Source Toolchain FitNesse tests.</h4>
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/orangebeard-io/fitnesse-toolchain-listener/master/.github/logo.svg" alt="Orangebeard.io Java Client" height="200"><br />
   <a href="https://repo.maven.apache.org/maven2/io/orangebeard/fitnesse-toolchain-listener/">
     <img src="https://img.shields.io/maven-central/v/io.orangebeard/fitnesse-toolchain-listener.svg?maxAge=3600&style=flat-square"
       alt="MVN Version" />
@@ -18,9 +22,15 @@ A test output listener for Praegus Open Source Toolchain FitNesse tests.
   </a>
 </p>
 
-## Installation
+<div align="center">
+  <h4>
+    <a href="https://orangebeard.io">Orangebeard</a> |
+    <a href="#installation">Installation</a> |
+    <a href="#configuration">Configuration</a>
+  </h4>
+</div>
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.orangebeard/fitnesse-toolchain-listener.svg?maxAge=3600)](https://mvnrepository.com/artifact/io.orangebeard/fitnesse-toolchain-listener)
+## Installation
 
 ### 1. Add dependency
 Add this project as a dependency to your pom:
@@ -32,7 +42,7 @@ Add this project as a dependency to your pom:
 </dependency>
 ```
 
-### Configuration
+## Configuration
 Create `orangebeard.properties` in your project's test resource folder, containing:
 
 ```properties
@@ -46,7 +56,7 @@ orangebeard.description=<DESCRIPTION>
 orangebeard.attributes=key:value; value;
 ```
 
-#### Environment properties
+### Environment properties
 Properties can also be set in the build, by passing them to the maven build. For example:
 
 ```
@@ -65,6 +75,6 @@ with
 
 in the test that is started from your pipeline (which is probably `src/test/java/.../FixtureDebugTest.java`)
  
-### Limitations
+## Limitations
  - Currently, this runner/listener will start separate launches for each testsystem if you use >1 testsystem (i.e. Fit and Slim)in one suite
  - Full HTML report zip (or any other attachments) will not be saved when its size is exceeds 1 MB due to an api limitation
