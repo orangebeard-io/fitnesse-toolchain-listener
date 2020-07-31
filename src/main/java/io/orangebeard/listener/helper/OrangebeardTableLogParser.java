@@ -40,7 +40,7 @@ public class OrangebeardTableLogParser {
         LogLevel level = LogLevel.debug;
         if (logChunk.contains("class=\"error\"") || logChunk.contains("class=\"fail\"")) {
             level = LogLevel.error;
-        } else if (reportTable(removeNonTableProlog(logChunk))) {
+        } else if (reportTable(logChunk)) {
             level = LogLevel.info;
         }
         return level;

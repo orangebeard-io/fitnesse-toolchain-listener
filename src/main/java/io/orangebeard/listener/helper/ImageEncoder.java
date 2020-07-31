@@ -14,7 +14,7 @@ import static java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC;
 public class ImageEncoder {
 
     public static String encodeForEmbedding(File file) throws IOException {
-        BufferedImage imageToEncode = resizeImage(ImageIO.read(file), 200, -1);
+        BufferedImage imageToEncode = resizeImage(ImageIO.read(file), 300, -1);
         ByteArrayOutputStream imageOutputStream = new ByteArrayOutputStream();
         ImageIO.write(imageToEncode, "jpg", imageOutputStream);
         byte[] imageBytes = imageOutputStream.toByteArray();
@@ -38,6 +38,10 @@ public class ImageEncoder {
         g2d.setComposite(AlphaComposite.Src);
         g2d.setRenderingHint(KEY_INTERPOLATION, VALUE_INTERPOLATION_BICUBIC);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2d.drawImage(image, 0, 0, width, height, null);
         g2d.dispose();
 
