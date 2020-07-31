@@ -42,6 +42,7 @@ import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPageProperty;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import org.slf4j.LoggerFactory;
 
 import static io.orangebeard.client.entity.Status.FAILED;
 import static io.orangebeard.client.entity.Status.PASSED;
@@ -52,6 +53,8 @@ import static java.util.Objects.requireNonNull;
 public class OrangebeardTestSystemListener implements TestSystemListener, Closeable {
     private String propertyFileName = "orangebeard.properties";
     private static final String PROP_ROOT_PATH = "fitnesseroot.path";
+
+    private final org.slf4j.Logger logger = LoggerFactory.getLogger(OrangebeardTestSystemListener.class);
 
     private OrangebeardClient orangebeardClient;
     private final OrangebeardProperties orangebeardProperties = new OrangebeardProperties();
@@ -195,7 +198,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 Set<Attribute> suiteAttrs = null;
                 PageData suitePageData = getPageDataForSuite(suitePath, testPage.getSourcePage());
                 if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
-                    suiteAttrs = extractTags(suitePageData.getAttribute(WikiPageProperty.SUITES));
+                    suiteAttrs = extractAttributes(suitePageData.getAttribute(WikiPageProperty.SUITES));
                 }
                 if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.HELP) != null) {
                     description = suitePageData.getAttribute(WikiPageProperty.HELP);
@@ -209,12 +212,21 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return suiteId;
     }
 
+    /**
+     * Return the PageData object for the WikiPage of a given suitePath
+     * @param suitePath The full (FitNesse) path of the suite we are looking for
+     * @param sourcePage The SourcePage to iterate through
+     *                   (as it is an object that contains its ancestor SourcePages as well)
+     * @return The PageData object of the given Suite's sourcePage, or null if the sourcePage does not contain
+     * a page with the given SuitePath (should not happen)
+     */
     private PageData getPageDataForSuite(String suitePath, WikiPage sourcePage) {
         if (suitePath.endsWith(sourcePage.getParent().getName())) {
             return sourcePage.getParent().getData();
         } else if (sourcePage != sourcePage.getParent()) {
             return getPageDataForSuite(suitePath, sourcePage.getParent());
         } else {
+            logger.warn("No PageData was found for suite {}", suitePath);
             return null;
         }
     }
@@ -246,7 +258,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return tags;
     }
 
-    private Set<Attribute> extractTags(String propTags) {
+    private Set<Attribute> extractAttributes(String propTags) {
         if (propTags != null) {
             return Arrays.stream(propTags.split("\\s*[;,]\\s*")).map(Attribute::new).collect(Collectors.toSet());
         }
@@ -289,7 +301,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             }
 
             if (pageData.getAttribute(WikiPageProperty.SUITES) != null) {
-                Set<Attribute> tags = extractTags(pageData.getAttribute(WikiPageProperty.SUITES));
+                Set<Attribute> tags = extractAttributes(pageData.getAttribute(WikiPageProperty.SUITES));
                 testItem.attributes(tags);
             }
         }
