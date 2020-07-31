@@ -214,7 +214,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     /**
      * Return the PageData object for the WikiPage of a given suitePath
-     * @param suitePath The full (FitNesse) path of the suite we are looking for
+     *
+     * @param suitePath  The full (FitNesse) path of the suite we are looking for
      * @param sourcePage The SourcePage to iterate through
      *                   (as it is an object that contains its ancestor SourcePages as well)
      * @return The PageData object of the given Suite's sourcePage, or null if the sourcePage does not contain
