@@ -6,6 +6,7 @@ import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.FinishTestItem;
 import io.orangebeard.client.entity.FinishTestRun;
 import io.orangebeard.client.entity.Log;
+import io.orangebeard.client.entity.LogLevel;
 import io.orangebeard.client.entity.StartTestItem;
 import io.orangebeard.client.entity.StartTestRun;
 import io.orangebeard.client.entity.Status;
@@ -37,6 +38,7 @@ import fitnesse.testsystems.TestSummary;
 import fitnesse.testsystems.TestSystem;
 import fitnesse.testsystems.TestSystemListener;
 import fitnesse.wiki.PageData;
+import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPageProperty;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -96,9 +98,11 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testOutputChunk(String chunk) {
         UUID testId = runContext.getTestId(runContext.getLatestTestName());
+        LogLevel logLevel = LogLevel.debug;
 
         if (chunk.toLowerCase().contains("<table")) {
             chunk = OrangebeardTableLogParser.removeNonTableProlog(chunk);
+            logLevel = OrangebeardTableLogParser.getLogLevel(chunk);
             chunk = OrangebeardTableLogParser.applyOrangebeardTableStyling(chunk);
         }
 
@@ -111,7 +115,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 .message(enrichedLog)
                 .itemUuid(testId)
                 .testRunUUID(runContext.getTestRun())
-                .logLevel(OrangebeardTableLogParser.getLogLevel(enrichedLog))
+                .logLevel(logLevel)
                 .time(LocalDateTime.now())
                 .build();
 
@@ -121,7 +125,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     @Override
     public void testStarted(TestPage testPage) {
-        UUID suiteId = getAndOrStartSuite(testPage);
+        UUID suiteId = getAndOrStartSuite((WikiTestPage) testPage);
         StartTestItem testItem = getStartTestItem(testPage);
         UUID testId = orangebeardClient.startTestItem(suiteId, testItem);
 
@@ -176,7 +180,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
     }
 
-    private UUID getAndOrStartSuite(TestPage testPage) {
+    private UUID getAndOrStartSuite(WikiTestPage testPage) {
         String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
         String[] suites = fullSuiteName.split("\\.");
         String suitePath = "";
@@ -187,11 +191,17 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             suitePath = suitePath + "." + suite;
             suiteId = runContext.getSuiteId(suitePath);
             if (suiteId == null) {
+                String description = null;
                 Set<Attribute> suiteAttrs = null;
-                if(suitePath.endsWith(fullSuiteName)) {
-                     suiteAttrs = retrieveSuiteMetaData(testPage);
+                PageData suitePageData = getPageDataForSuite(suitePath, testPage.getSourcePage());
+                if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
+                    suiteAttrs = extractTags(suitePageData.getAttribute(WikiPageProperty.SUITES));
                 }
-                suiteId = startSuite(parentSuiteId, suite, suiteAttrs);
+                if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.HELP) != null) {
+                    description = suitePageData.getAttribute(WikiPageProperty.HELP);
+                }
+
+                suiteId = startSuite(parentSuiteId, suite, description, suiteAttrs);
                 runContext.addSuite(suitePath, suiteId);
             }
         }
@@ -199,20 +209,18 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return suiteId;
     }
 
-    private Set<Attribute> retrieveSuiteMetaData(TestPage testPage) {
-        Set<Attribute> metaData = new HashSet<>();
-        if (testPage instanceof WikiTestPage) {
-
-            PageData suitePageData = ((WikiTestPage) testPage).getSourcePage().getParent().getData();
-            if (suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
-                metaData.addAll(extractTags(suitePageData.getAttribute(WikiPageProperty.SUITES)));
-            }
+    private PageData getPageDataForSuite(String suitePath, WikiPage sourcePage) {
+        if (suitePath.endsWith(sourcePage.getParent().getName())) {
+            return sourcePage.getParent().getData();
+        } else if (sourcePage != sourcePage.getParent()) {
+            return getPageDataForSuite(suitePath, sourcePage.getParent());
+        } else {
+            return null;
         }
-        return metaData;
     }
 
-    private UUID startSuite(UUID parentId, String shortName, Set<Attribute> attributes) {
-        StartTestItem suite = new StartTestItem(runContext.getTestRun(), shortName, TestItemType.SUITE, null, attributes);
+    private UUID startSuite(UUID parentId, String shortName, String description, Set<Attribute> attributes) {
+        StartTestItem suite = new StartTestItem(runContext.getTestRun(), shortName, TestItemType.SUITE, description, attributes);
         return orangebeardClient.startTestItem(parentId, suite);
     }
 
