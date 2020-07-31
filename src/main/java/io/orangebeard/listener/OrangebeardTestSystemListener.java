@@ -87,7 +87,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 orangebeardProperties.requiredValuesArePresent()
         );
 
-        this.orangebeardLogger = new OrangebeardLogger(orangebeardClient, getFitnesseRootPath());
+        this.orangebeardLogger = new OrangebeardLogger(orangebeardClient, rootPath);
 
         StartTestRun testrun = new StartTestRun(
                 orangebeardProperties.getTestSetName(),
