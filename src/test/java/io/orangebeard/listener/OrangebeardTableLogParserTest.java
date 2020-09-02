@@ -3,13 +3,13 @@ package io.orangebeard.listener;
 import io.orangebeard.listener.helper.ImageEncoder;
 import io.orangebeard.listener.helper.OrangebeardTableLogParser;
 
-import java.io.File;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.io.File;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(ImageEncoder.class)
 public class OrangebeardTableLogParserTest {
+
     private final String TEST_HTML_WITH_IMAGES = "<html>\n" +
             "<body>\n" +
             "<img src=\"1.png\"/>\n" +
@@ -33,8 +34,6 @@ public class OrangebeardTableLogParserTest {
             "</body>\n" +
             "</html>";
 
-    private final OrangebeardTableLogParser parser = new OrangebeardTableLogParser();
-
     @Test
     public void multiple_images_can_be_replaced() throws Exception {
         PowerMockito.mockStatic(ImageEncoder.class);
@@ -46,14 +45,14 @@ public class OrangebeardTableLogParserTest {
             return "BASE64OF:" + args[0].toString();
         });
 
-        String result = parser.embedImagesAndStripHyperlinks(TEST_HTML_WITH_IMAGES, "");
+        String result = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(TEST_HTML_WITH_IMAGES, "");
         assertThat(result).contains("BASE64OF:" + File.separator + "1.png");
         assertThat(result).contains("BASE64OF:" + File.separator + "2.png");
     }
 
     @Test
     public void hyperlinks_are_removed() {
-        String result = parser.embedImagesAndStripHyperlinks(TEST_HTML_WITH_LINK, "");
+        String result = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(TEST_HTML_WITH_LINK, "");
         assertThat(result).doesNotContain("a href");
         assertThat(result).doesNotContain("http://hyperlink1");
         assertThat(result).doesNotContain("http://hyperlink2");

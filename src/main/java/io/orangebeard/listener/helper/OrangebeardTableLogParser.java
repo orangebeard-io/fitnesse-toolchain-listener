@@ -9,6 +9,11 @@ import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
 
 public class OrangebeardTableLogParser {
+
+    private OrangebeardTableLogParser(){
+        // only static functions
+    }
+
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(OrangebeardTableLogParser.class);
 
     public static String embedImagesAndStripHyperlinks(String html, String rootPath) {
