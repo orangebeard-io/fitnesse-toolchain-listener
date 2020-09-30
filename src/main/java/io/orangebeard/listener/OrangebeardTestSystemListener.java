@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import fitnesse.testrunner.WikiTestPage;
 import fitnesse.testsystems.Assertion;
 import fitnesse.testsystems.ExceptionResult;
+import fitnesse.testsystems.ExecutionResult;
 import fitnesse.testsystems.TestPage;
 import fitnesse.testsystems.TestResult;
 import fitnesse.testsystems.TestSummary;
@@ -44,8 +45,10 @@ import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.LoggerFactory;
 
+import static fitnesse.testsystems.ExecutionResult.getExecutionResult;
 import static io.orangebeard.client.entity.Status.FAILED;
 import static io.orangebeard.client.entity.Status.PASSED;
+import static io.orangebeard.client.entity.Status.SKIPPED;
 import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
 import static java.util.Objects.requireNonNull;
 
@@ -138,8 +141,15 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testComplete(TestPage testPage, TestSummary testSummary) {
         String testName = getTestName(testPage);
+        ExecutionResult result = getExecutionResult(testSummary);
         if (runContext.hasTest(testName)) {
-            FinishTestItem item = new FinishTestItem(runContext.getTestRun(), testResult(testSummary), null, null);
+            FinishTestItem item = new FinishTestItem(
+                    runContext.getTestRun(),
+                    testResult(result),
+                    null,
+                    null
+            );
+
             orangebeardClient.finishTestItem(runContext.getTestId(testName), item);
             runContext.remove(testName);
         }
@@ -175,11 +185,15 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     }
 
-    private Status testResult(TestSummary testSummary) {
-        if (testSummary.getExceptions() > 0 || testSummary.getWrong() > 0) {
-            return FAILED;
-        } else {
-            return PASSED;
+    private Status testResult(ExecutionResult result) {
+        switch (result) {
+            case ERROR:
+            case FAIL:
+                return FAILED;
+            case IGNORE:
+                return SKIPPED;
+            default:
+                return PASSED;
         }
     }
 
