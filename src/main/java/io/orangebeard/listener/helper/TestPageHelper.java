@@ -1,6 +1,9 @@
 package io.orangebeard.listener.helper;
 
+import fitnesse.testrunner.WikiTestPage;
+import fitnesse.testrunner.WikiTestPageUtil;
 import fitnesse.testsystems.TestPage;
+import fitnesse.wiki.PageCrawler;
 
 public class TestPageHelper {
 
@@ -23,5 +26,14 @@ public class TestPageHelper {
         } else {
             return "default";
         }
+    }
+
+    public static String getRelativeName(TestPage testPage) {
+        PageCrawler pageCrawler = ((WikiTestPage) testPage).getSourcePage().getPageCrawler();
+        String relativeName = pageCrawler.getRelativeName(WikiTestPageUtil.getSourcePage(testPage));
+        if ("".equals(relativeName)) {
+            relativeName = String.format("(%s)", testPage.getName());
+        }
+        return relativeName;
     }
 }
