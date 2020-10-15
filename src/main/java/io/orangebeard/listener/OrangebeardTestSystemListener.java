@@ -2,6 +2,7 @@ package io.orangebeard.listener;
 
 import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
+import io.orangebeard.client.OrangebeardV2Client;
 import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.FinishTestItem;
 import io.orangebeard.client.entity.FinishTestRun;
@@ -83,7 +84,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testSystemStarted(TestSystem testSystem) {
         orangebeardProperties.checkPropertiesArePresent();
-        this.orangebeardClient = new OrangebeardClient(
+        this.orangebeardClient = new OrangebeardV2Client(
                 orangebeardProperties.getEndpoint(),
                 orangebeardProperties.getAccessToken(),
                 orangebeardProperties.getProjectName(),
