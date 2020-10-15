@@ -32,7 +32,7 @@ public class TestPageHelper {
         PageCrawler pageCrawler = ((WikiTestPage) testPage).getSourcePage().getPageCrawler();
         String relativeName = pageCrawler.getRelativeName(WikiTestPageUtil.getSourcePage(testPage));
         if ("".equals(relativeName)) {
-            relativeName = String.format("(%s)", testPage.getName());
+            relativeName = testPage.getName();
         }
         return relativeName;
     }
