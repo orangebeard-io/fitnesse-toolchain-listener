@@ -49,6 +49,7 @@ import static fitnesse.testsystems.ExecutionResult.getExecutionResult;
 import static io.orangebeard.client.entity.Status.FAILED;
 import static io.orangebeard.client.entity.Status.PASSED;
 import static io.orangebeard.client.entity.Status.SKIPPED;
+import static io.orangebeard.listener.helper.TestPageHelper.getRelativeName;
 import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
 import static java.util.Objects.requireNonNull;
 
@@ -141,7 +142,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testComplete(TestPage testPage, TestSummary testSummary) {
         String testName = getTestName(testPage);
-        ExecutionResult result = getExecutionResult(testSummary);
+        ExecutionResult result = getExecutionResult(getRelativeName(testPage), testSummary);
         if (runContext.hasTest(testName)) {
             FinishTestItem item = new FinishTestItem(
                     runContext.getTestRun(),
