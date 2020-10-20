@@ -2,7 +2,7 @@ package io.orangebeard.listener;
 
 import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
-import io.orangebeard.client.OrangebeardV2Client;
+import io.orangebeard.client.OrangebeardV1Client;
 import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.FinishTestItem;
 import io.orangebeard.client.entity.FinishTestRun;
@@ -44,6 +44,7 @@ import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPageProperty;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static fitnesse.testsystems.ExecutionResult.getExecutionResult;
@@ -59,7 +60,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private String propertyFileName = "orangebeard.properties";
     private static final String PROP_ROOT_PATH = "fitnesseroot.path";
 
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(OrangebeardTestSystemListener.class);
+    private final Logger logger = LoggerFactory.getLogger(OrangebeardTestSystemListener.class);
 
     private OrangebeardClient orangebeardClient;
     private final OrangebeardProperties orangebeardProperties = new OrangebeardProperties();
@@ -85,7 +86,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testSystemStarted(TestSystem testSystem) {
         orangebeardProperties.checkPropertiesArePresent();
-        this.orangebeardClient = new OrangebeardV2Client(
+        this.orangebeardClient = new OrangebeardV1Client(
                 orangebeardProperties.getEndpoint(),
                 orangebeardProperties.getAccessToken(),
                 orangebeardProperties.getProjectName(),
