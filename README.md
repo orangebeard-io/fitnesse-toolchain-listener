@@ -66,7 +66,7 @@ Properties can also be set in the build, by passing them to the maven build. For
 mvn clean test-compile ... -Dorangebeard.attributes=Jenkins;Chrome -Dorangebeard.testset=small-regression
 ```
  
-### Use the runner
+## Use the runner
 Replace the
 ```java
 @RunWith(ToolchainTestRunner.class)
