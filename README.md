@@ -32,7 +32,8 @@
 
 ## Installation
 
-### 1. Add dependency
+The listener is only compatible with Java 11+, so make sure you're running your FitNesse test with Java 11. 
+ 
 Add this project as a dependency to your pom:
 ```xml
 <dependency>
@@ -55,6 +56,8 @@ orangebeard.testset=<TESTSET_NAME>
 orangebeard.description=<DESCRIPTION>
 orangebeard.attributes=key:value; value;
 ```
+
+Be warned: the access token is a credential token. We advise you to store this token in a credential store, and pass it to the listener through environment properties. See below how to do that! 
 
 ### Environment properties
 Properties can also be set in the build, by passing them to the maven build. For example:
