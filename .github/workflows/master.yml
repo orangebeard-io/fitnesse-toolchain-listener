@@ -42,7 +42,7 @@ jobs:
       - name: Unsnapshot version
         run: |
           mvn versions:set -DremoveSnapshot
-          echo "::set-env name=VERSION::$(mvn $MAVEN_CLI_OPTS help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          echo "{VERSION}={$(mvn $MAVEN_CLI_OPTS help:evaluate -Dexpression=project.version -q -DforceStdout)}" >> $GITHUB_ENV
       - name: Publish to GitHub Packages
         run: mvn clean -P github-release -DskipTests deploy
         env:
