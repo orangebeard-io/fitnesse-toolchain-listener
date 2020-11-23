@@ -54,8 +54,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "${{ env.VERSION }}"
-          release_name: "Release Orangebeard FitNesse Toolchain Listener ${{ env.VERSION }}"
+          tag_name: "$VERSION"
+          release_name: "Release Orangebeard FitNesse Toolchain Listener $VERSION"
           body: |
             Release Orangebeard FitNesse Toolchain Listener ${{ env.VERSION }}.
 
