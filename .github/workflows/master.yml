@@ -57,7 +57,7 @@ jobs:
           tag_name: "$VERSION"
           release_name: "Release Orangebeard FitNesse Toolchain Listener $VERSION"
           body: |
-            Release Orangebeard FitNesse Toolchain Listener ${{ env.VERSION }}.
+            Release Orangebeard FitNesse Toolchain Listener $VERSION.
 
             **Changelog:**
             - To be filled...
