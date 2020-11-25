@@ -1,25 +1,18 @@
 package io.orangebeard.listener;
 
-import io.orangebeard.client.OrangebeardClient;
-
 import io.orangebeard.client.OrangebeardV2Client;
 import io.orangebeard.client.entity.Attachment;
 import io.orangebeard.listener.helper.OrangebeardLogger;
 
 import org.junit.Test;
-import org.mockito.Mock;
-
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class OrangebeardLoggerTest {
-
 
     private final OrangebeardV2Client orangebeardV2Client = mock(OrangebeardV2Client.class);
     private final OrangebeardLogger orangebeardLogger = new OrangebeardLogger(orangebeardV2Client, "ROOTPATH");
@@ -37,6 +30,6 @@ public class OrangebeardLoggerTest {
     @Test
     public void mailto_links_are_not_attachments() {
         orangebeardLogger.attachFilesIfPresent(UUID.randomUUID(), UUID.randomUUID(), MESSAGE_WITH_MAILTO_LINKS);
-        verify(orangebeardV2Client,never()).sendAttachment(any(Attachment.class));
+        verify(orangebeardV2Client, never()).sendAttachment(any(Attachment.class));
     }
 }
