@@ -27,11 +27,12 @@ public class OrangebeardLogger {
     public void attachFilesIfPresent(UUID testId, UUID testRunId, String message) {
         Matcher attachments = attachmentPattern.matcher(message);
         while (attachments.find()) {
-            if (!attachments.group(1).startsWith("http://") && !attachments.group(1).startsWith("https://")) {
-                File attachmentFile = new File(rootPath, attachments.group(1));
-                String fileName = attachmentFile.getName();
-
+            if (!attachments.group(1).startsWith("http://") &&
+                    !attachments.group(1).startsWith("https://") &&
+                    !attachments.group(1).startsWith("mailto:")) {
                 try {
+                    File attachmentFile = new File(rootPath, attachments.group(1));
+                    String fileName = attachmentFile.getName();
                     Attachment attachment = Attachment.builder()
                             .file(new Attachment.File(attachmentFile))
                             .message(fileName)
@@ -43,7 +44,7 @@ public class OrangebeardLogger {
 
                     orangebeardClient.sendAttachment(attachment);
                 } catch (IOException e) {
-                    logger.warn("Unable to read attachment file: " + fileName);
+                    logger.warn("Unable to read attachment file for: " + attachments.group(1));
                 }
             }
         }
