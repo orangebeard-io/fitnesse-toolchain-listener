@@ -121,30 +121,29 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testOutputChunk(String chunk) {
         UUID testId = runContext.getTestId(runContext.getLatestTestName());
-        processChunkToLogEntries(testId, chunk);
-//        LogLevel logLevel = LogLevel.debug;
-//
-//        if (chunk.toLowerCase().contains("<table")) {
-//            chunk = OrangebeardTableLogParser.removeNonTableProlog(chunk);
-//            logLevel = OrangebeardTableLogParser.getLogLevel(chunk);
-//            chunk = OrangebeardTableLogParser.applyOrangebeardTableStyling(chunk);
-//        }
-//
-//        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(chunk, rootPath);
-//
-//        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-//        enrichedLog = enrichedLog.replaceAll("\u0000", "");
-//
-//        Log logItem = Log.builder()
-//                .message(enrichedLog)
-//                .itemUuid(testId)
-//                .testRunUUID(runContext.getTestRun())
-//                .logLevel(logLevel)
-//                .time(LocalDateTime.now())
-//                .build();
-//
-//        orangebeardClient.log(logItem);
-//        orangebeardLogger.attachFilesIfPresent(testId, runContext.getTestRun(), chunk);
+        LogLevel logLevel = LogLevel.debug;
+
+        if (chunk.toLowerCase().contains("<table")) {
+            chunk = OrangebeardTableLogParser.removeNonTableProlog(chunk);
+            logLevel = OrangebeardTableLogParser.getLogLevel(chunk);
+            chunk = OrangebeardTableLogParser.applyOrangebeardTableStyling(chunk);
+        }
+
+        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(chunk, rootPath);
+
+        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
+        enrichedLog = enrichedLog.replaceAll("\u0000", "");
+
+        Log logItem = Log.builder()
+                .message(enrichedLog)
+                .itemUuid(testId)
+                .testRunUUID(runContext.getTestRun())
+                .logLevel(logLevel)
+                .time(LocalDateTime.now())
+                .build();
+
+        orangebeardClient.log(logItem);
+        orangebeardLogger.attachFilesIfPresent(testId, runContext.getTestRun(), chunk);
     }
 
     @Override
@@ -351,39 +350,5 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             default:
                 return TestItemType.STEP;
         }
-    }
-
-    private final Set<String> ignoreClasses = new HashSet<>(Arrays.asList("scenarioTable", "tableTemplate", "importTable", "importTable"));
-
-    private void processChunkToLogEntries(UUID testId, String chunk) {
-        Document htmlChunk = Jsoup.parse(chunk);
-        Elements tables = htmlChunk.select("table");
-        for(Element t : tables) {
-            if (Collections.disjoint(t.classNames(), ignoreClasses)) {
-                for (Element row : t.select("tr")) {
-                    StringBuilder msg = new StringBuilder("|");
-                    //for (Element cell : row.select("td"))
-                    Log logItem = Log.builder()
-                            .message(row.text())
-                            .itemUuid(testId)
-                            .testRunUUID(runContext.getTestRun())
-                            .logLevel(determineLoglevel(row))
-                            .time(LocalDateTime.now())
-                            .build();
-
-                    orangebeardClient.log(logItem);
-                }
-            }
-        }
-    }
-
-    private LogLevel determineLoglevel(Element row) {
-        if(row.className().contains("fail") ||
-                row.select(".fail").size() > 0 ||
-                row.className().contains("error") ||
-                row.select(".error").size() > 0) {
-            return LogLevel.error;
-        }
-        return LogLevel.info;
     }
 }
