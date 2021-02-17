@@ -1,5 +1,10 @@
 package io.orangebeard.listener;
 
+import fitnesse.html.template.HtmlPage;
+import fitnesse.testsystems.slim.HtmlTable;
+
+import fitnesse.testsystems.slim.HtmlTableScanner;
+
 import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.OrangebeardV1Client;
@@ -26,6 +31,8 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -44,6 +51,13 @@ import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPageProperty;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import org.htmlparser.tags.TableTag;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,29 +121,30 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testOutputChunk(String chunk) {
         UUID testId = runContext.getTestId(runContext.getLatestTestName());
-        LogLevel logLevel = LogLevel.debug;
-
-        if (chunk.toLowerCase().contains("<table")) {
-            chunk = OrangebeardTableLogParser.removeNonTableProlog(chunk);
-            logLevel = OrangebeardTableLogParser.getLogLevel(chunk);
-            chunk = OrangebeardTableLogParser.applyOrangebeardTableStyling(chunk);
-        }
-
-        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(chunk, rootPath);
-
-        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-        enrichedLog = enrichedLog.replaceAll("\u0000", "");
-
-        Log logItem = Log.builder()
-                .message(enrichedLog)
-                .itemUuid(testId)
-                .testRunUUID(runContext.getTestRun())
-                .logLevel(logLevel)
-                .time(LocalDateTime.now())
-                .build();
-
-        orangebeardClient.log(logItem);
-        orangebeardLogger.attachFilesIfPresent(testId, runContext.getTestRun(), chunk);
+        processChunkToLogEntries(testId, chunk);
+//        LogLevel logLevel = LogLevel.debug;
+//
+//        if (chunk.toLowerCase().contains("<table")) {
+//            chunk = OrangebeardTableLogParser.removeNonTableProlog(chunk);
+//            logLevel = OrangebeardTableLogParser.getLogLevel(chunk);
+//            chunk = OrangebeardTableLogParser.applyOrangebeardTableStyling(chunk);
+//        }
+//
+//        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(chunk, rootPath);
+//
+//        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
+//        enrichedLog = enrichedLog.replaceAll("\u0000", "");
+//
+//        Log logItem = Log.builder()
+//                .message(enrichedLog)
+//                .itemUuid(testId)
+//                .testRunUUID(runContext.getTestRun())
+//                .logLevel(logLevel)
+//                .time(LocalDateTime.now())
+//                .build();
+//
+//        orangebeardClient.log(logItem);
+//        orangebeardLogger.attachFilesIfPresent(testId, runContext.getTestRun(), chunk);
     }
 
     @Override
@@ -336,5 +351,39 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             default:
                 return TestItemType.STEP;
         }
+    }
+
+    private final Set<String> ignoreClasses = new HashSet<>(Arrays.asList("scenarioTable", "tableTemplate", "importTable", "importTable"));
+
+    private void processChunkToLogEntries(UUID testId, String chunk) {
+        Document htmlChunk = Jsoup.parse(chunk);
+        Elements tables = htmlChunk.select("table");
+        for(Element t : tables) {
+            if (Collections.disjoint(t.classNames(), ignoreClasses)) {
+                for (Element row : t.select("tr")) {
+                    StringBuilder msg = new StringBuilder("|");
+                    //for (Element cell : row.select("td"))
+                    Log logItem = Log.builder()
+                            .message(row.text())
+                            .itemUuid(testId)
+                            .testRunUUID(runContext.getTestRun())
+                            .logLevel(determineLoglevel(row))
+                            .time(LocalDateTime.now())
+                            .build();
+
+                    orangebeardClient.log(logItem);
+                }
+            }
+        }
+    }
+
+    private LogLevel determineLoglevel(Element row) {
+        if(row.className().contains("fail") ||
+                row.select(".fail").size() > 0 ||
+                row.className().contains("error") ||
+                row.select(".error").size() > 0) {
+            return LogLevel.error;
+        }
+        return LogLevel.info;
     }
 }

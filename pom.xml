@@ -36,8 +36,8 @@
         <java.version>1.11</java.version>
 
         <!--dependency versions-->
-        <fitnesse.version>20200501</fitnesse.version>
-        <hsac.version>4.20.0</hsac.version>
+        <fitnesse.version>20201213</fitnesse.version>
+        <hsac.version>4.23.2</hsac.version>
         <java.client.version>1.1.4</java.client.version>
     </properties>
 
@@ -53,6 +53,11 @@
             <artifactId>hsac-fitnesse-fixtures</artifactId>
             <version>${hsac.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.13.1</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

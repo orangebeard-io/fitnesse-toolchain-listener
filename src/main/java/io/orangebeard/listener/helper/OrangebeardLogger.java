@@ -6,6 +6,7 @@ import io.orangebeard.client.entity.LogLevel;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -43,7 +44,7 @@ public class OrangebeardLogger {
                             .build();
 
                     orangebeardClient.sendAttachment(attachment);
-                } catch (IOException e) {
+                } catch (IOException | InvalidPathException e) {
                     logger.warn("Unable to read attachment file for: " + attachments.group(1));
                 }
             }
