@@ -1,10 +1,5 @@
 package io.orangebeard.listener;
 
-import fitnesse.html.template.HtmlPage;
-import fitnesse.testsystems.slim.HtmlTable;
-
-import fitnesse.testsystems.slim.HtmlTableScanner;
-
 import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.OrangebeardV1Client;
@@ -31,8 +26,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -51,13 +44,6 @@ import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPageProperty;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import org.htmlparser.tags.TableTag;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
-import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +59,7 @@ import static java.util.Objects.requireNonNull;
 public class OrangebeardTestSystemListener implements TestSystemListener, Closeable {
     private String propertyFileName = "orangebeard.properties";
     private static final String PROP_ROOT_PATH = "fitnesseroot.path";
+    private static final String PROP_ATTACH_ZIP = "attach.zipfile";
 
     private final Logger logger = LoggerFactory.getLogger(OrangebeardTestSystemListener.class);
 
@@ -81,20 +68,33 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private ToolchainRunningContext runContext;
 
     private String rootPath = getFitnesseRootPath();
+    private boolean attachZip = false;
+    private boolean local = false;
     private OrangebeardLogger orangebeardLogger;
 
-    private boolean local = false;
 
     public OrangebeardTestSystemListener(@Nullable String propertyFileName, String rootPath) {
         if (propertyFileName != null) {
             this.propertyFileName = propertyFileName;
         }
+        determineResultZip();
         this.rootPath = rootPath;
     }
 
     public OrangebeardTestSystemListener(String propertyFileName, boolean local) {
         this.propertyFileName = propertyFileName;
-        this.local = local;
+        determineResultZip();
+        this.local = !local;
+    }
+
+    private void determineResultZip() {
+        try {
+            Properties propertyFile = new Properties();
+            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.propertyFileName)));
+            attachZip = propertyFile.getProperty(PROP_ATTACH_ZIP) != null ? Boolean.parseBoolean(propertyFile.getProperty(PROP_ROOT_PATH)) : attachZip;
+        } catch (NullPointerException | IOException e) {
+            //keep value
+        }
     }
 
     @Override
@@ -177,7 +177,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         stopAllSuites();
         orangebeardClient.finishTestRun(runContext.getTestRun(), new FinishTestRun(null));
 
-        if (!local) {
+        if (attachZip) {
             orangebeardLogger.attachFitNesseResultsToRun(runContext.getTestRun());
         }
         reset();

@@ -15,7 +15,7 @@ import net.lingala.zip4j.ZipFile;
 import org.slf4j.LoggerFactory;
 
 public class OrangebeardLogger {
-    private static final Pattern attachmentPattern = Pattern.compile("href=\"([^\"]*)\"");
+    private static final Pattern attachmentPattern = Pattern.compile("href=\"([^$<>\"]*)\"");
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(OrangebeardLogger.class);
     private final OrangebeardClient orangebeardClient;
     private final String rootPath;
