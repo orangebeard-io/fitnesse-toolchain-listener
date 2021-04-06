@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -255,7 +256,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private void stopAllSuites() {
-        for (UUID suiteId : runContext.getAllSuiteIds()) {
+        // reverse suite ids so suites are stopped in the reverse order of which these are started. 
+        List<UUID> suiteIds = runContext.getAllSuiteIds();
+        Collections.reverse(suiteIds);
+        for (UUID suiteId : suiteIds) {
             stopSuite(suiteId);
         }
     }
