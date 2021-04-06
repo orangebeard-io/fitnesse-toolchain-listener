@@ -60,6 +60,7 @@ import static java.util.Objects.requireNonNull;
 public class OrangebeardTestSystemListener implements TestSystemListener, Closeable {
     private String propertyFileName = "orangebeard.properties";
     private static final String PROP_ROOT_PATH = "fitnesseroot.path";
+    private static final String PROP_ATTACH_ZIP = "attach.zipfile";
 
     private final Logger logger = LoggerFactory.getLogger(OrangebeardTestSystemListener.class);
 
@@ -68,20 +69,33 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private ToolchainRunningContext runContext;
 
     private String rootPath = getFitnesseRootPath();
+    private boolean attachZip = false;
+    private boolean local = false;
     private OrangebeardLogger orangebeardLogger;
 
-    private boolean local = false;
 
     public OrangebeardTestSystemListener(@Nullable String propertyFileName, String rootPath) {
         if (propertyFileName != null) {
             this.propertyFileName = propertyFileName;
         }
+        determineResultZip();
         this.rootPath = rootPath;
     }
 
     public OrangebeardTestSystemListener(String propertyFileName, boolean local) {
         this.propertyFileName = propertyFileName;
-        this.local = local;
+        determineResultZip();
+        this.local = !local;
+    }
+
+    private void determineResultZip() {
+        try {
+            Properties propertyFile = new Properties();
+            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.propertyFileName)));
+            attachZip = propertyFile.getProperty(PROP_ATTACH_ZIP) != null ? Boolean.parseBoolean(propertyFile.getProperty(PROP_ROOT_PATH)) : attachZip;
+        } catch (NullPointerException | IOException e) {
+            //keep value
+        }
     }
 
     @Override
@@ -164,7 +178,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         stopAllSuites();
         orangebeardClient.finishTestRun(runContext.getTestRun(), new FinishTestRun());
 
-        if (!local) {
+        if (attachZip) {
             orangebeardLogger.attachFitNesseResultsToRun(runContext.getTestRun());
         }
         reset();

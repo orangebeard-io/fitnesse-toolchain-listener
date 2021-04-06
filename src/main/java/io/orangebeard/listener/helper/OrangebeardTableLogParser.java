@@ -28,7 +28,7 @@ public class OrangebeardTableLogParser {
             try {
                 html = html.replace(imgMatcher.group(), "<img src=\"data:image/png;base64," + ImageEncoder.encodeForEmbedding(imageFile) + "\" width=\"200\" onClick=\"openImage(this)\">");
             } catch (IOException ioe) {
-                logger.error("Exception while reading the Image", ioe);
+                logger.error("Exception while reading image: " + img + " (" + ioe.getMessage() + ")");
             }
         }
         return html;
