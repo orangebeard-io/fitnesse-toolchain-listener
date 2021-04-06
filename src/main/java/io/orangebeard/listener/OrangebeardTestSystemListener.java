@@ -162,7 +162,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testSystemStopped(TestSystem testSystem, Throwable throwable) {
         stopAllSuites();
-        orangebeardClient.finishTestRun(runContext.getTestRun(), new FinishTestRun(null));
+        orangebeardClient.finishTestRun(runContext.getTestRun(), new FinishTestRun());
 
         if (!local) {
             orangebeardLogger.attachFitNesseResultsToRun(runContext.getTestRun());
