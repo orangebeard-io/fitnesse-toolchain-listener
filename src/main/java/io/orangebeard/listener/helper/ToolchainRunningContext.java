@@ -42,7 +42,10 @@ public class ToolchainRunningContext {
     }
 
     public UUID getSuiteId(String fullSuiteName) {
-        return suites.get(fullSuiteName).getUuid();
+        if (suites.containsKey(fullSuiteName)) {
+            return suites.get(fullSuiteName).getUuid();
+        }
+        return null;
     }
 
     public void addSuite(String fullSuiteName, UUID suiteId, LocalDateTime startTime) {
