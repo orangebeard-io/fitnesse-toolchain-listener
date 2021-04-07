@@ -14,6 +14,7 @@ import io.orangebeard.client.entity.Status;
 import io.orangebeard.client.entity.TestItemType;
 import io.orangebeard.listener.helper.OrangebeardLogger;
 import io.orangebeard.listener.helper.OrangebeardTableLogParser;
+import io.orangebeard.listener.helper.Suite;
 import io.orangebeard.listener.helper.TestPageHelper;
 import io.orangebeard.listener.helper.ToolchainRunningContext;
 
@@ -25,6 +26,7 @@ import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -72,7 +74,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private boolean attachZip = false;
     private boolean local = false;
     private OrangebeardLogger orangebeardLogger;
-
 
     public OrangebeardTestSystemListener(@Nullable String propertyFileName, String rootPath) {
         if (propertyFileName != null) {
@@ -236,8 +237,9 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                     description = suitePageData.getAttribute(WikiPageProperty.HELP);
                 }
 
-                suiteId = startSuite(parentSuiteId, suite, description, suiteAttrs);
-                runContext.addSuite(suitePath, suiteId);
+                StartTestItem suiteItem = new StartTestItem(runContext.getTestRun(), suite, TestItemType.SUITE, description, suiteAttrs);
+                suiteId = orangebeardClient.startTestItem(parentSuiteId, suiteItem);
+                runContext.addSuite(suitePath, suiteId, suiteItem.getStartTime());
             }
         }
 
@@ -264,17 +266,13 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
     }
 
-    private UUID startSuite(UUID parentId, String shortName, String description, Set<Attribute> attributes) {
-        StartTestItem suite = new StartTestItem(runContext.getTestRun(), shortName, TestItemType.SUITE, description, attributes);
-        return orangebeardClient.startTestItem(parentId, suite);
-    }
-
     private void stopAllSuites() {
-        // reverse suite ids so suites are stopped in the reverse order of which these are started. 
-        List<UUID> suiteIds = runContext.getAllSuiteIds();
-        Collections.reverse(suiteIds);
-        for (UUID suiteId : suiteIds) {
-            stopSuite(suiteId);
+        List<Suite> suites = runContext.getAllSuites();
+        // reverse suite ids so suites are stopped in the reverse order of which these are started.
+        suites.sort(Comparator.comparing(Suite::getStartTime).reversed());
+
+        for (Suite suite : suites) {
+            stopSuite(suite.getUuid());
         }
     }
 

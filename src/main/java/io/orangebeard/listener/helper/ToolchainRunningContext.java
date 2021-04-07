@@ -1,5 +1,6 @@
 package io.orangebeard.listener.helper;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,12 +9,11 @@ import java.util.UUID;
 /**
  * Parallel execution context and set of operations to interact with it
  */
-
 public class ToolchainRunningContext {
 
     private final UUID testRun;
     private final HashMap<String, UUID> tests = new HashMap<>();
-    private final HashMap<String, UUID> suites = new HashMap<>();
+    private final HashMap<String, Suite> suites = new HashMap<>();
     private String latestTest;
 
     public ToolchainRunningContext(UUID testRunId) {
@@ -42,18 +42,19 @@ public class ToolchainRunningContext {
     }
 
     public UUID getSuiteId(String fullSuiteName) {
-        return suites.get(fullSuiteName);
+        return suites.get(fullSuiteName).getUuid();
     }
 
-    public void addSuite(String fullSuiteName, UUID suiteId) {
-        suites.put(fullSuiteName, suiteId);
-    }
-
-    public List<UUID> getAllSuiteIds() {
-        return new ArrayList<>(suites.values());
+    public void addSuite(String fullSuiteName, UUID suiteId, LocalDateTime startTime) {
+        suites.put(fullSuiteName, new Suite(suiteId, startTime));
     }
 
     public String getLatestTestName() {
         return latestTest;
     }
+
+    public List<Suite> getAllSuites() {
+        return new ArrayList<>(suites.values());
+    }
 }
+
