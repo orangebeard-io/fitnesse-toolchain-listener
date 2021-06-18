@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 public class OrangebeardTableLogParser {
 
-    private OrangebeardTableLogParser(){
+    private OrangebeardTableLogParser() {
         // only static functions
     }
 
@@ -39,6 +39,16 @@ public class OrangebeardTableLogParser {
             html = html.substring(html.indexOf("<table"), html.lastIndexOf("</table>") + 8);
         }
         return html;
+    }
+
+    public static String normalizeXML(String xml) {
+        String newXml = xml.replace("\n", "").replace("\t", "");
+        while (newXml.contains("  ")) {
+            newXml = newXml.replace("  ", " ");
+        }
+        newXml = newXml.replace("> <", "><");
+        newXml = newXml.replaceAll("\u0000", "");
+        return newXml;
     }
 
     public static LogLevel getLogLevel(String logChunk) {

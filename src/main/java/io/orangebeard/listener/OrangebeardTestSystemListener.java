@@ -12,6 +12,7 @@ import io.orangebeard.client.entity.StartTestItem;
 import io.orangebeard.client.entity.StartTestRun;
 import io.orangebeard.client.entity.Status;
 import io.orangebeard.client.entity.TestItemType;
+import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.helper.OrangebeardLogger;
 import io.orangebeard.listener.helper.OrangebeardTableLogParser;
 import io.orangebeard.listener.helper.Suite;
@@ -54,6 +55,7 @@ import static fitnesse.testsystems.ExecutionResult.getExecutionResult;
 import static io.orangebeard.client.entity.Status.FAILED;
 import static io.orangebeard.client.entity.Status.PASSED;
 import static io.orangebeard.client.entity.Status.SKIPPED;
+import static io.orangebeard.listener.helper.OrangebeardTableLogParser.normalizeXML;
 import static io.orangebeard.listener.helper.TestPageHelper.getRelativeName;
 import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
 import static java.util.Objects.requireNonNull;
@@ -74,6 +76,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private boolean attachZip = false;
     private boolean local = false;
     private OrangebeardLogger orangebeardLogger;
+    private static int numberOfLogs = 0;
+    private final ScenarioLibraries scenarioLibraries = new ScenarioLibraries();
 
     public OrangebeardTestSystemListener(@Nullable String propertyFileName, String rootPath) {
         if (propertyFileName != null) {
@@ -121,31 +125,43 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     @Override
-    public void testOutputChunk(String chunk) {
+    public void testOutputChunk(TestPage testPage, String chunk) {
+        String log = OrangebeardTableLogParser.removeNonTableProlog(chunk);
         UUID testId = runContext.getTestId(runContext.getLatestTestName());
+
+        updateScenarioLibraries(testPage);
+        if (scenarioLibraries.contains(log)) {
+            return;
+        }
         LogLevel logLevel = LogLevel.debug;
 
-        if (chunk.toLowerCase().contains("<table")) {
-            chunk = OrangebeardTableLogParser.removeNonTableProlog(chunk);
-            logLevel = OrangebeardTableLogParser.getLogLevel(chunk);
-            chunk = OrangebeardTableLogParser.applyOrangebeardTableStyling(chunk);
+        if (log.toLowerCase().contains("<table")) {
+            logLevel = OrangebeardTableLogParser.getLogLevel(log);
+            log = OrangebeardTableLogParser.applyOrangebeardTableStyling(log);
         }
 
-        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(chunk, rootPath);
+        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
 
         //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-        enrichedLog = enrichedLog.replaceAll("\u0000", "");
 
         Log logItem = Log.builder()
-                .message(enrichedLog)
+                .message(normalizeXML(enrichedLog))
                 .itemUuid(testId)
-                .testRunUUID(runContext.getTestRun())
+                .testRunUUID(runContext.getTestRunUUID())
                 .logLevel(logLevel)
                 .time(LocalDateTime.now())
                 .build();
 
         orangebeardClient.log(logItem);
-        orangebeardLogger.attachFilesIfPresent(testId, runContext.getTestRun(), chunk);
+        numberOfLogs++;
+        orangebeardLogger.attachFilesIfPresent(testId, runContext.getTestRunUUID(), log);
+    }
+
+    private void updateScenarioLibraries(TestPage testPage) {
+        if (testPage instanceof WikiTestPage) {
+            WikiTestPage wiki = (WikiTestPage) testPage;
+            scenarioLibraries.add(wiki.getScenarioLibraries());
+        }
     }
 
     @Override
@@ -160,27 +176,54 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testComplete(TestPage testPage, TestSummary testSummary) {
         String testName = getTestName(testPage);
+        UUID testId = runContext.getTestId(testName);
         ExecutionResult result = getExecutionResult(getRelativeName(testPage), testSummary);
         if (runContext.hasTest(testName)) {
             FinishTestItem item = new FinishTestItem(
-                    runContext.getTestRun(),
-                    testResult(result),
+                    runContext.getTestRunUUID(),
+                    getTestResult(result),
                     null,
                     null
             );
+            if (testPage instanceof WikiTestPage) {
+                logScenarioLibraries(testId, ((WikiTestPage) testPage).getScenarioLibraries());
+            }
 
-            orangebeardClient.finishTestItem(runContext.getTestId(testName), item);
+            orangebeardClient.finishTestItem(testId, item);
             runContext.remove(testName);
+        }
+    }
+
+    private void logScenarioLibraries(UUID testId, List<WikiPage> scenarioLibraries) {
+        for (WikiPage scenarioLibrary : scenarioLibraries) {
+            String log = scenarioLibrary.getHtml();
+
+            log = OrangebeardTableLogParser.applyOrangebeardTableStyling(log);
+            String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
+
+            //Workaround for corner case where table contains binary representation with 0x00 unicode chars
+
+            Log logItem = Log.builder()
+                    .message(normalizeXML(enrichedLog))
+                    .itemUuid(testId)
+                    .testRunUUID(runContext.getTestRunUUID())
+                    .logLevel(LogLevel.debug)
+                    .time(LocalDateTime.now())
+                    .build();
+
+            orangebeardClient.log(logItem);
+            numberOfLogs++;
         }
     }
 
     @Override
     public void testSystemStopped(TestSystem testSystem, Throwable throwable) {
+        logger.info("Number of logs: {}", numberOfLogs);
         stopAllSuites();
-        orangebeardClient.finishTestRun(runContext.getTestRun(), new FinishTestRun());
+        orangebeardClient.finishTestRun(runContext.getTestRunUUID(), new FinishTestRun());
 
         if (attachZip) {
-            orangebeardLogger.attachFitNesseResultsToRun(runContext.getTestRun());
+            orangebeardLogger.attachFitNesseResultsToRun(runContext.getTestRunUUID());
         }
         reset();
     }
@@ -204,7 +247,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     }
 
-    private Status testResult(ExecutionResult result) {
+    private Status getTestResult(ExecutionResult result) {
         switch (result) {
             case ERROR:
             case FAIL:
@@ -237,7 +280,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                     description = suitePageData.getAttribute(WikiPageProperty.HELP);
                 }
 
-                StartTestItem suiteItem = new StartTestItem(runContext.getTestRun(), suite, TestItemType.SUITE, description, suiteAttrs);
+                StartTestItem suiteItem = new StartTestItem(runContext.getTestRunUUID(), suite, TestItemType.SUITE, description, suiteAttrs);
                 suiteId = orangebeardClient.startTestItem(parentSuiteId, suiteItem);
                 runContext.addSuite(suitePath, suiteId, suiteItem.getStartTime());
             }
@@ -277,7 +320,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private void stopSuite(UUID suiteId) {
-        FinishTestItem item = new FinishTestItem(runContext.getTestRun(), null, null, null);
+        FinishTestItem item = new FinishTestItem(runContext.getTestRunUUID(), null, null, null);
         orangebeardClient.finishTestItem(suiteId, item);
     }
 
@@ -321,7 +364,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private StartTestItem getStartTestItem(TestPage testPage) {
         StartTestItem.StartTestItemBuilder testItem = StartTestItem.builder()
-                .testRunUUID(runContext.getTestRun())
+                .testRunUUID(runContext.getTestRunUUID())
                 .startTime(LocalDateTime.now())
                 .name(getTestName(testPage))
                 .type(determinePageType(testPage.getName()));
