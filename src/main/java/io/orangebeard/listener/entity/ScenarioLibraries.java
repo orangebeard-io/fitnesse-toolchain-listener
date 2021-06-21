@@ -10,10 +10,15 @@ public class ScenarioLibraries {
     private final Map<String, ScenarioLibrary> scenarioLibraries = new HashMap<>();
 
     public void add(List<WikiPage> libraries) {
-        libraries.forEach(s -> scenarioLibraries.put(s.getFullPath().toString(), new ScenarioLibrary(s.getFullPath().toString(), s.getHtml())));
+        libraries.forEach(s -> scenarioLibraries.put(
+                s.getFullPath().toString(),
+                new ScenarioLibrary(s.getFullPath().toString(), s.getHtml())));
     }
 
     public boolean contains(String table) {
-        return !scenarioLibraries.values().stream().map(it -> it.containsTitleOf(table)).collect(Collectors.toList()).contains(false);
+        return !scenarioLibraries.values().stream()
+                .map(it -> it.containsTitleOf(table))
+                .collect(Collectors.toList())
+                .contains(false);
     }
 }
