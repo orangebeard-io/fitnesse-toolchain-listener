@@ -47,6 +47,7 @@ public class OrangebeardTableLogParser {
             newXml = newXml.replace("  ", " ");
         }
         newXml = newXml.replace("> <", "><");
+        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
         newXml = newXml.replaceAll("\u0000", "");
         return newXml;
     }

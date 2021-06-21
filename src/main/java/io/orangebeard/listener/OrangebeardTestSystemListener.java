@@ -142,8 +142,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
         String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
 
-        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-
         Log logItem = Log.builder()
                 .message(normalizeXML(enrichedLog))
                 .itemUuid(testId)
@@ -157,13 +155,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         orangebeardLogger.attachFilesIfPresent(testId, runContext.getTestRunUUID(), log);
     }
 
-    private void updateScenarioLibraries(TestPage testPage) {
-        if (testPage instanceof WikiTestPage) {
-            WikiTestPage wiki = (WikiTestPage) testPage;
-            scenarioLibraries.add(wiki.getScenarioLibraries());
-        }
-    }
-
     @Override
     public void testStarted(TestPage testPage) {
         UUID suiteId = getAndOrStartSuite((WikiTestPage) testPage);
@@ -171,6 +162,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         UUID testId = orangebeardClient.startTestItem(suiteId, testItem);
 
         runContext.addTest(getTestName(testPage), testId);
+
+        logScenarioLibraries(testId, ((WikiTestPage) testPage).getScenarioLibraries());
     }
 
     @Override
@@ -185,9 +178,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                     null,
                     null
             );
-            if (testPage instanceof WikiTestPage) {
-                logScenarioLibraries(testId, ((WikiTestPage) testPage).getScenarioLibraries());
-            }
 
             orangebeardClient.finishTestItem(testId, item);
             runContext.remove(testName);
@@ -213,6 +203,13 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
             orangebeardClient.log(logItem);
             numberOfLogs++;
+        }
+    }
+
+    private void updateScenarioLibraries(TestPage testPage) {
+        if (testPage instanceof WikiTestPage) {
+            WikiTestPage wiki = (WikiTestPage) testPage;
+            scenarioLibraries.add(wiki.getScenarioLibraries());
         }
     }
 
