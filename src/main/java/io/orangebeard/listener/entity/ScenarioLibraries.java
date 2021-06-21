@@ -16,9 +16,9 @@ public class ScenarioLibraries {
     }
 
     public boolean contains(String table) {
-        return !scenarioLibraries.values().stream()
+        return scenarioLibraries.values().stream()
                 .map(it -> it.containsTitleOf(table))
                 .collect(Collectors.toList())
-                .contains(false);
+                .contains(true);
     }
 }
