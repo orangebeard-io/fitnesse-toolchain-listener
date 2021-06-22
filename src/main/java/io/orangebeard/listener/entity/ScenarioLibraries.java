@@ -12,7 +12,7 @@ public class ScenarioLibraries {
     public void add(List<WikiPage> libraries) {
         libraries.forEach(s -> scenarioLibraries.put(
                 s.getFullPath().toString(),
-                new ScenarioLibrary(s.getFullPath().toString(), s.getData().getContent())));
+                new ScenarioLibrary(s.getFullPath().toString(), s.getHtml())));
     }
 
     public boolean contains(String table) {
