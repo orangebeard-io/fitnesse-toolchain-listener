@@ -148,6 +148,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         updateScenarioLibraries(testPage);
         if (scenarioLibraries.contains(log)) {
             return;
+        } else if (isScenario(log)) {
+            return; // for now we do not log scenario's outside of the scenario libraries
         }
         LogLevel logLevel = LogLevel.debug;
 
@@ -169,6 +171,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         orangebeardClient.log(logItem);
         numberOfLogs++;
         orangebeardLogger.attachFilesIfPresent(testId, runContext.getTestRunUUID(), log);
+    }
+
+    private boolean isScenario(String log) {
+        return log.contains("class=\"toolchainTable scenarioTable\"");
     }
 
     @Override
