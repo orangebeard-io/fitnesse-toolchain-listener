@@ -3,6 +3,7 @@ package io.orangebeard.listener;
 import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.OrangebeardV1Client;
+import io.orangebeard.client.OrangebeardV2Client;
 import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.FinishTestItem;
 import io.orangebeard.client.entity.FinishTestRun;
@@ -12,6 +13,7 @@ import io.orangebeard.client.entity.StartTestItem;
 import io.orangebeard.client.entity.StartTestRun;
 import io.orangebeard.client.entity.Status;
 import io.orangebeard.client.entity.TestItemType;
+import io.orangebeard.listener.entity.ApiVersion;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.helper.OrangebeardLogger;
 import io.orangebeard.listener.helper.OrangebeardTableLogParser;
@@ -23,6 +25,7 @@ import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -55,6 +58,8 @@ import static fitnesse.testsystems.ExecutionResult.getExecutionResult;
 import static io.orangebeard.client.entity.Status.FAILED;
 import static io.orangebeard.client.entity.Status.PASSED;
 import static io.orangebeard.client.entity.Status.SKIPPED;
+import static io.orangebeard.listener.entity.ApiVersion.V1;
+import static io.orangebeard.listener.entity.ApiVersion.V2;
 import static io.orangebeard.listener.helper.OrangebeardTableLogParser.normalizeXML;
 import static io.orangebeard.listener.helper.TestPageHelper.getRelativeName;
 import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
@@ -106,12 +111,23 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testSystemStarted(TestSystem testSystem) {
         orangebeardProperties.checkPropertiesArePresent();
-        this.orangebeardClient = new OrangebeardV1Client(
-                orangebeardProperties.getEndpoint(),
-                orangebeardProperties.getAccessToken(),
-                orangebeardProperties.getProjectName(),
-                orangebeardProperties.requiredValuesArePresent()
-        );
+        ApiVersion apiVersion = determineApiVersion(propertyFileName);
+        if (apiVersion == V2) {
+            this.orangebeardClient = new OrangebeardV2Client(
+                    orangebeardProperties.getEndpoint(),
+                    orangebeardProperties.getAccessToken(),
+                    orangebeardProperties.getProjectName(),
+                    orangebeardProperties.requiredValuesArePresent()
+            );
+        } else {
+            this.orangebeardClient = new OrangebeardV1Client(
+                    orangebeardProperties.getEndpoint(),
+                    orangebeardProperties.getAccessToken(),
+                    orangebeardProperties.getProjectName(),
+                    orangebeardProperties.requiredValuesArePresent()
+            );
+        }
+        logger.info("Listener api version {} is used", apiVersion);
 
         this.orangebeardLogger = new OrangebeardLogger(orangebeardClient, rootPath);
 
@@ -391,6 +407,24 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 return TestItemType.AFTER_METHOD;
             default:
                 return TestItemType.STEP;
+        }
+    }
+
+    private ApiVersion determineApiVersion(String propertyFileName) {
+        try {
+            Properties properties = new Properties();
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propertyFileName);
+
+            if (inputStream != null) {
+                properties.load(inputStream);
+            }
+            String api = properties.getProperty("orangebeard.api");
+            if (api != null && api.toUpperCase().equals(V2.toString())) {
+                return V2;
+            }
+            return V1;
+        } catch (IOException e) {
+            return V1;
         }
     }
 }
