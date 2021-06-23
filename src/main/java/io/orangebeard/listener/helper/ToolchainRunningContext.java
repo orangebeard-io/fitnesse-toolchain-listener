@@ -20,7 +20,7 @@ public class ToolchainRunningContext {
         testRun = testRunId;
     }
 
-    public UUID getTestRun() {
+    public UUID getTestRunUUID() {
         return testRun;
     }
 
