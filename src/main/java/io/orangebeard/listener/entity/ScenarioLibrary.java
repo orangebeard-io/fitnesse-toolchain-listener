@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Getter;
 
-import static io.orangebeard.listener.helper.OrangebeardTableLogParser.normalizeXML;
-
 @Getter
 public class ScenarioLibrary {
     private final String name;
@@ -17,13 +15,13 @@ public class ScenarioLibrary {
 
     public ScenarioLibrary(String name, String htmlPage) {
         this.name = name;
-        scenarioTables.addAll(Arrays.stream(normalizeXML(htmlPage).split("<br/>")).filter(it -> it.startsWith("<table")).collect(Collectors.toList()));
+        scenarioTables.addAll(Arrays.stream(htmlPage.split("<br/>")).filter(it -> it.startsWith("<table")).collect(Collectors.toList()));
         scenarioTitles.addAll(scenarioTables.stream().map(ScenarioLibrary::getScenarioTitle).collect(Collectors.toList()));
-        this.normalizedHtml = normalizeXML(htmlPage);
+        this.normalizedHtml = htmlPage;
     }
 
     public boolean containsTitleOf(String table) {
-        return scenarioTitles.contains(getScenarioTitle(normalizeXML(table)));
+        return scenarioTitles.contains(getScenarioTitle(table));
     }
 
     public static String getScenarioTitle(String xml) {

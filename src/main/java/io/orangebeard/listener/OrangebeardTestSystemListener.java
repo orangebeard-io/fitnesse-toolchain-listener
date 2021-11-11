@@ -60,7 +60,6 @@ import static io.orangebeard.client.entity.Status.PASSED;
 import static io.orangebeard.client.entity.Status.SKIPPED;
 import static io.orangebeard.listener.entity.ApiVersion.V1;
 import static io.orangebeard.listener.entity.ApiVersion.V2;
-import static io.orangebeard.listener.helper.OrangebeardTableLogParser.normalizeXML;
 import static io.orangebeard.listener.helper.TestPageHelper.getRelativeName;
 import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
 import static java.util.Objects.requireNonNull;
@@ -159,7 +158,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
 
         Log logItem = Log.builder()
-                .message(normalizeXML(enrichedLog))
+                .message(enrichedLog)
                 .itemUuid(testId)
                 .testRunUUID(runContext.getTestRunUUID())
                 .logLevel(logLevel)
@@ -210,7 +209,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             //Workaround for corner case where table contains binary representation with 0x00 unicode chars
 
             Log logItem = Log.builder()
-                    .message(normalizeXML(enrichedLog))
+                    .message(enrichedLog)
                     .itemUuid(testId)
                     .testRunUUID(runContext.getTestRunUUID())
                     .logLevel(LogLevel.debug)

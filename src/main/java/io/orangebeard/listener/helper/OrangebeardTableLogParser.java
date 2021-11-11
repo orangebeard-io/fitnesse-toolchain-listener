@@ -41,16 +41,6 @@ public class OrangebeardTableLogParser {
         return html;
     }
 
-    public static String normalizeXML(String xml) {
-        while (xml.contains("  ")) {
-            xml = xml.replace("  ", " ");
-        }
-        xml = xml.replace("> <", "><");
-        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-        xml = xml.replaceAll("\u0000", "");
-        return xml;
-    }
-
     public static LogLevel getLogLevel(String logChunk) {
         LogLevel level = LogLevel.debug;
         if (logChunk.contains("class=\"error\"") || logChunk.contains("class=\"fail\"")) {
