@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import fitnesse.testrunner.WikiTestPage;
 import fitnesse.testsystems.Assertion;
 import fitnesse.testsystems.ExceptionResult;
@@ -63,6 +62,7 @@ import static io.orangebeard.listener.entity.ApiVersion.V2;
 import static io.orangebeard.listener.helper.TestPageHelper.getRelativeName;
 import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toSet;
 
 @NoArgsConstructor
 public class OrangebeardTestSystemListener implements TestSystemListener, Closeable {
@@ -133,8 +133,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         StartTestRun testrun = new StartTestRun(
                 orangebeardProperties.getTestSetName(),
                 orangebeardProperties.getDescription(),
-                getTestRunAttributes(testSystem.getName())
-        );
+                getTestRunAttributes(testSystem.getName()), ChangedComponentsHelper.getChangedComponents());
 
         runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testrun));
     }
@@ -349,7 +348,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private Set<Attribute> extractAttributes(String propTags) {
         if (propTags != null) {
-            return Arrays.stream(propTags.split("\\s*[;,]\\s*")).map(Attribute::new).collect(Collectors.toSet());
+            return Arrays.stream(propTags.split("\\s*[;,]\\s*")).map(Attribute::new).collect(toSet());
         }
         return Collections.emptySet();
     }
