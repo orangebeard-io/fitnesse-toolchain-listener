@@ -42,14 +42,13 @@ public class OrangebeardTableLogParser {
     }
 
     public static String normalizeXML(String xml) {
-        String newXml = xml.replace("\n", "").replace("\t", "");
-        while (newXml.contains("  ")) {
-            newXml = newXml.replace("  ", " ");
+        while (xml.contains("  ")) {
+            xml = xml.replace("  ", " ");
         }
-        newXml = newXml.replace("> <", "><");
+        xml = xml.replace("> <", "><");
         //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-        newXml = newXml.replaceAll("\u0000", "");
-        return newXml;
+        xml = xml.replaceAll("\u0000", "");
+        return xml;
     }
 
     public static LogLevel getLogLevel(String logChunk) {
