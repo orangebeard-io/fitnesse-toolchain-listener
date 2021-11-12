@@ -207,6 +207,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
 
             //Workaround for corner case where table contains binary representation with 0x00 unicode chars
+            enrichedLog = enrichedLog.replaceAll("\u0000", "");
 
             Log logItem = Log.builder()
                     .message(enrichedLog)
