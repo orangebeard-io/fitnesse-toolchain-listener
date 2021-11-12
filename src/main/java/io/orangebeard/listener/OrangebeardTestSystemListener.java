@@ -245,6 +245,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         reset();
     }
 
+    /**
+     * Resets the context and client. Used when a FitNesse Run switches testsystems i.e. from FIT to SLiM.
+     * This results in starting e new Orangebeard run with a different testSytem attribute.
+     */
     private void reset() {
         this.runContext = null;
         this.orangebeardClient = getOrangebeardClient();
