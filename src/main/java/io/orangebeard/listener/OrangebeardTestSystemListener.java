@@ -75,7 +75,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private final OrangebeardProperties orangebeardProperties;
     private final ScenarioLibraries scenarioLibraries;
-    private final OrangebeardClient orangebeardClient;
+    private OrangebeardClient orangebeardClient;
     private final AttachmentHandler attachmentHandler;
     private ToolchainRunningContext runContext;
 
@@ -246,7 +246,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private void reset() {
-        runContext = null;
+        this.runContext = null;
+        this.orangebeardClient = getOrangebeardClient();
     }
 
     @Override
