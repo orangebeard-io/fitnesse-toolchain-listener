@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 public class OrangebeardTableLogParser {
 
-    private OrangebeardTableLogParser(){
+    private OrangebeardTableLogParser() {
         // only static functions
     }
 
