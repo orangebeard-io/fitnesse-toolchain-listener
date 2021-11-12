@@ -1,5 +1,7 @@
 package io.orangebeard.listener.helper;
 
+import io.orangebeard.listener.entity.Suite;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
