@@ -14,13 +14,13 @@ import java.util.regex.Pattern;
 import net.lingala.zip4j.ZipFile;
 import org.slf4j.LoggerFactory;
 
-public class OrangebeardLogger {
+public class AttachmentHandler {
     private static final Pattern attachmentPattern = Pattern.compile("href=\"([^$<>\"]*)\"");
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(OrangebeardLogger.class);
+    private final org.slf4j.Logger logger = LoggerFactory.getLogger(AttachmentHandler.class);
     private final OrangebeardClient orangebeardClient;
     private final String rootPath;
 
-    public OrangebeardLogger(OrangebeardClient orangebeardClient, String rootPath) {
+    public AttachmentHandler(OrangebeardClient orangebeardClient, String rootPath) {
         this.orangebeardClient = orangebeardClient;
         this.rootPath = rootPath;
     }

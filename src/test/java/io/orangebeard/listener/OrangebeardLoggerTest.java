@@ -2,7 +2,7 @@ package io.orangebeard.listener;
 
 import io.orangebeard.client.OrangebeardV2Client;
 import io.orangebeard.client.entity.Attachment;
-import io.orangebeard.listener.helper.OrangebeardLogger;
+import io.orangebeard.listener.helper.AttachmentHandler;
 
 import java.util.UUID;
 import org.junit.Test;
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.verify;
 public class OrangebeardLoggerTest {
 
     private final OrangebeardV2Client orangebeardV2Client = mock(OrangebeardV2Client.class);
-    private final OrangebeardLogger orangebeardLogger = new OrangebeardLogger(orangebeardV2Client, "ROOTPATH");
+    private final AttachmentHandler orangebeardLogger = new AttachmentHandler(orangebeardV2Client, "ROOTPATH");
 
     @Test
     public void mailto_links_are_not_attachments() {

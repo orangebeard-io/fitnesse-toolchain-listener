@@ -11,13 +11,12 @@ import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.LogLevel;
 import io.orangebeard.client.entity.StartTestItem;
 import io.orangebeard.client.entity.StartTestRun;
-import io.orangebeard.client.entity.Status;
 import io.orangebeard.client.entity.TestItemType;
 import io.orangebeard.listener.entity.ApiVersion;
 import io.orangebeard.listener.entity.ScenarioLibraries;
-import io.orangebeard.listener.helper.OrangebeardLogger;
+import io.orangebeard.listener.entity.Suite;
+import io.orangebeard.listener.helper.AttachmentHandler;
 import io.orangebeard.listener.helper.OrangebeardTableLogParser;
-import io.orangebeard.listener.helper.Suite;
 import io.orangebeard.listener.helper.TestPageHelper;
 import io.orangebeard.listener.helper.ToolchainRunningContext;
 
@@ -28,15 +27,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import fitnesse.testrunner.WikiTestPage;
 import fitnesse.testsystems.Assertion;
 import fitnesse.testsystems.ExceptionResult;
@@ -49,22 +45,20 @@ import fitnesse.testsystems.TestSystemListener;
 import fitnesse.wiki.PageData;
 import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPageProperty;
-import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static fitnesse.testsystems.ExecutionResult.getExecutionResult;
-import static io.orangebeard.client.entity.Status.FAILED;
-import static io.orangebeard.client.entity.Status.PASSED;
-import static io.orangebeard.client.entity.Status.SKIPPED;
 import static io.orangebeard.listener.entity.ApiVersion.V1;
 import static io.orangebeard.listener.entity.ApiVersion.V2;
 import static io.orangebeard.listener.helper.TestPageHelper.getRelativeName;
 import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
+import static io.orangebeard.listener.helper.TypeConverter.convertAttributes;
+import static io.orangebeard.listener.helper.TypeConverter.convertTestResultStatus;
+import static io.orangebeard.listener.helper.TypeConverter.determinePageType;
 import static java.util.Objects.requireNonNull;
 
-@NoArgsConstructor
 public class OrangebeardTestSystemListener implements TestSystemListener, Closeable {
     private String propertyFileName = "orangebeard.properties";
     private static final String PROP_ROOT_PATH = "fitnesseroot.path";
@@ -73,15 +67,33 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private final Logger logger = LoggerFactory.getLogger(OrangebeardTestSystemListener.class);
 
     private OrangebeardClient orangebeardClient;
-    private final OrangebeardProperties orangebeardProperties = new OrangebeardProperties();
+    private final OrangebeardProperties orangebeardProperties;
     private ToolchainRunningContext runContext;
 
     private String rootPath = getFitnesseRootPath();
     private boolean attachZip = false;
     private boolean local = false;
-    private OrangebeardLogger orangebeardLogger;
+    private AttachmentHandler orangebeardLogger;
     private static int numberOfLogs = 0;
-    private final ScenarioLibraries scenarioLibraries = new ScenarioLibraries();
+    private final ScenarioLibraries scenarioLibraries;
+
+    OrangebeardTestSystemListener(
+            OrangebeardProperties orangebeardProperties,
+            ToolchainRunningContext runContext,
+            OrangebeardClient orangebeardClient,
+            AttachmentHandler orangebeardLogger,
+            ScenarioLibraries scenarioLibraries) {
+        this.orangebeardProperties = orangebeardProperties;
+        this.runContext = runContext;
+        this.orangebeardClient = orangebeardClient;
+        this.orangebeardLogger = orangebeardLogger;
+        this.scenarioLibraries = scenarioLibraries;
+    }
+
+    public OrangebeardTestSystemListener() {
+        this.orangebeardProperties = new OrangebeardProperties();
+        this.scenarioLibraries = new ScenarioLibraries();
+    }
 
     public OrangebeardTestSystemListener(@Nullable String propertyFileName, String rootPath) {
         if (propertyFileName != null) {
@@ -89,12 +101,16 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
         determineResultZip();
         this.rootPath = rootPath;
+        this.orangebeardProperties = new OrangebeardProperties();
+        this.scenarioLibraries = new ScenarioLibraries();
     }
 
     public OrangebeardTestSystemListener(String propertyFileName, boolean local) {
         this.propertyFileName = propertyFileName;
         determineResultZip();
         this.local = !local;
+        this.orangebeardProperties = new OrangebeardProperties();
+        this.scenarioLibraries = new ScenarioLibraries();
     }
 
     private void determineResultZip() {
@@ -128,7 +144,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
         logger.info("Listener api version {} is used", apiVersion);
 
-        this.orangebeardLogger = new OrangebeardLogger(orangebeardClient, rootPath);
+        this.orangebeardLogger = new AttachmentHandler(orangebeardClient, rootPath);
 
         StartTestRun testrun = new StartTestRun(
                 orangebeardProperties.getTestSetName(),
@@ -156,6 +172,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
 
         String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
+        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
+        enrichedLog = enrichedLog.replaceAll("\u0000", "");
 
         Log logItem = Log.builder()
                 .message(enrichedLog)
@@ -189,7 +207,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         if (runContext.hasTest(testName)) {
             FinishTestItem item = new FinishTestItem(
                     runContext.getTestRunUUID(),
-                    getTestResult(result),
+                    convertTestResultStatus(result),
                     null,
                     null
             );
@@ -260,18 +278,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     }
 
-    private Status getTestResult(ExecutionResult result) {
-        switch (result) {
-            case ERROR:
-            case FAIL:
-                return FAILED;
-            case IGNORE:
-                return SKIPPED;
-            default:
-                return PASSED;
-        }
-    }
-
     private UUID getAndOrStartSuite(WikiTestPage testPage) {
         String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
         String[] suites = fullSuiteName.split("\\.");
@@ -287,7 +293,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 Set<Attribute> suiteAttrs = null;
                 PageData suitePageData = getPageDataForSuite(suitePath, testPage.getSourcePage());
                 if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
-                    suiteAttrs = extractAttributes(suitePageData.getAttribute(WikiPageProperty.SUITES));
+                    suiteAttrs = convertAttributes(suitePageData.getAttribute(WikiPageProperty.SUITES));
                 }
                 if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.HELP) != null) {
                     description = suitePageData.getAttribute(WikiPageProperty.HELP);
@@ -348,13 +354,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return tags;
     }
 
-    private Set<Attribute> extractAttributes(String propTags) {
-        if (propTags != null) {
-            return Arrays.stream(propTags.split("\\s*[;,]\\s*")).map(Attribute::new).collect(Collectors.toSet());
-        }
-        return Collections.emptySet();
-    }
-
     private String getFitnesseRootPath() {
         Properties propertyFile = new Properties();
         String defaultRoot;
@@ -391,23 +390,12 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             }
 
             if (pageData.getAttribute(WikiPageProperty.SUITES) != null) {
-                Set<Attribute> tags = extractAttributes(pageData.getAttribute(WikiPageProperty.SUITES));
+                Set<Attribute> tags = convertAttributes(pageData.getAttribute(WikiPageProperty.SUITES));
                 testItem.attributes(tags);
             }
         }
 
         return testItem.build();
-    }
-
-    private TestItemType determinePageType(String pageName) {
-        switch (pageName) {
-            case "SuiteSetUp":
-                return TestItemType.BEFORE_METHOD;
-            case "SuiteTearDown":
-                return TestItemType.AFTER_METHOD;
-            default:
-                return TestItemType.STEP;
-        }
     }
 
     private ApiVersion determineApiVersion(String propertyFileName) {
