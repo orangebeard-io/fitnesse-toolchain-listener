@@ -61,9 +61,9 @@ import static java.util.Objects.requireNonNull;
 
 public class OrangebeardTestSystemListener implements TestSystemListener, Closeable {
     private final Logger logger = LoggerFactory.getLogger(OrangebeardTestSystemListener.class);
-
     private static final String PROP_ROOT_PATH = "fitnesseroot.path";
     private static final String PROP_ATTACH_ZIP = "attach.zipfile";
+    private static final String USER_DIR_PROPERTY = "user.dir";
     private final boolean attachZip;
     private final String rootPath;
     private String propertyFileName = "orangebeard.properties";
@@ -118,10 +118,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
     }
 
-    public OrangebeardTestSystemListener(String propertyFileName, boolean mavenBuild) {
+    public OrangebeardTestSystemListener(String propertyFileName, boolean wikiTestRun) {
         this.propertyFileName = propertyFileName;
         this.attachZip = attachZip();
-        this.wikiTestRun = !mavenBuild;
+        this.wikiTestRun = wikiTestRun;
         this.orangebeardProperties = new OrangebeardProperties();
         this.scenarioLibraries = new ScenarioLibraries();
         this.rootPath = getFitnesseRootPath();
@@ -159,7 +159,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
         String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
         //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-        enrichedLog = enrichedLog.replaceAll("\u0000", "");
+        enrichedLog = enrichedLog.replace("\u0000", "");
 
         Log logItem = Log.builder()
                 .message(enrichedLog)
@@ -211,7 +211,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
 
             //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-            enrichedLog = enrichedLog.replaceAll("\u0000", "");
+            enrichedLog = enrichedLog.replace("\u0000", "");
 
             Log logItem = Log.builder()
                     .message(enrichedLog)
@@ -343,21 +343,21 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private String getFitnesseRootPath() {
         Properties propertyFile = new Properties();
         String defaultRoot;
-        if (System.getProperty("user.dir").endsWith("wiki")) {
-            defaultRoot = System.getProperty("user.dir") + File.separator + "FitNesseRoot" + File.separator;
+        if (System.getProperty(USER_DIR_PROPERTY).endsWith("wiki")) {
+            defaultRoot = System.getProperty(USER_DIR_PROPERTY) + File.separator + "FitNesseRoot" + File.separator;
         } else {
-            defaultRoot = System.getProperty("user.dir") + File.separator + "wiki" + File.separator + "FitNesseRoot" + File.separator;
+            defaultRoot = System.getProperty(USER_DIR_PROPERTY) + File.separator + "wiki" + File.separator + "FitNesseRoot" + File.separator;
         }
-        String rootPath = System.getProperty(PROP_ROOT_PATH);
-        if (rootPath == null) {
+        String fitnesseRootPath = System.getProperty(PROP_ROOT_PATH);
+        if (fitnesseRootPath == null) {
             try {
                 propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.propertyFileName)));
-                rootPath = propertyFile.getProperty(PROP_ROOT_PATH) != null ? propertyFile.getProperty(PROP_ROOT_PATH) : defaultRoot;
+                fitnesseRootPath = propertyFile.getProperty(PROP_ROOT_PATH) != null ? propertyFile.getProperty(PROP_ROOT_PATH) : defaultRoot;
             } catch (NullPointerException | IOException e) {
-                rootPath = defaultRoot;
+                fitnesseRootPath = defaultRoot;
             }
         }
-        return rootPath;
+        return fitnesseRootPath;
     }
 
     private StartTestItem getStartTestItem(TestPage testPage) {
