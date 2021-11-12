@@ -21,7 +21,7 @@ public class TypeConverter {
     }
 
     public static Set<Attribute> convertAttributes(String propTags) {
-        if (propTags != null) {
+        if (propTags != null && propTags.length() > 0) {
             return Arrays.stream(propTags.split("\\s*[;,]\\s*"))
                     .map(Attribute::new)
                     .collect(Collectors.toSet());
