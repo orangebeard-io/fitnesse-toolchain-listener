@@ -67,7 +67,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private final boolean attachZip;
     private final String rootPath;
     private String propertyFileName = "orangebeard.properties";
-    private boolean local = false;
+    /**
+     * Property that determines whether or not the test run is run from the browser in the wiki or not.
+     */
+    private boolean wikiTestRun = false;
     private static int numberOfLogs = 0;
 
     private final OrangebeardProperties orangebeardProperties;
@@ -111,10 +114,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.scenarioLibraries = new ScenarioLibraries();
     }
 
-    public OrangebeardTestSystemListener(String propertyFileName, boolean local) {
+    public OrangebeardTestSystemListener(String propertyFileName, boolean mavenBuild) {
         this.propertyFileName = propertyFileName;
         this.attachZip = attachZip();
-        this.local = !local;
+        this.wikiTestRun = !mavenBuild;
         this.orangebeardProperties = new OrangebeardProperties();
         this.scenarioLibraries = new ScenarioLibraries();
         this.rootPath = getFitnesseRootPath();
@@ -344,7 +347,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private Set<Attribute> getTestRunAttributes(String testSystemName) {
         Set<Attribute> tags = new HashSet<>(orangebeardProperties.getAttributes());
         tags.add(new Attribute("Test System", testSystemName));
-        if (local) {
+        if (wikiTestRun) {
             tags.add(new Attribute("wiki", InetAddress.getLocalHost().getHostName()));
         }
 
