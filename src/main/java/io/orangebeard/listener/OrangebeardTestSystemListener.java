@@ -149,7 +149,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 getTestRunAttributes(testSystem.getName())
         );
 
-        runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testrun));
+        this.runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testrun));
     }
 
     @Override
