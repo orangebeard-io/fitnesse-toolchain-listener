@@ -38,7 +38,7 @@
         <!--dependency versions-->
         <fitnesse.version>20210606</fitnesse.version>
         <hsac.version>4.27.3</hsac.version>
-        <java.client.version>1.1.10</java.client.version>
+        <java.client.version>1.1.11</java.client.version>
     </properties>
 
     <dependencies>
@@ -64,7 +64,7 @@
         <dependency>
             <groupId>io.orangebeard</groupId>
             <artifactId>java-client</artifactId>
-            <version>1.1.11-SNAPSHOT</version>
+            <version>${java.client.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.fasterxml.jackson.core</groupId>
