@@ -102,7 +102,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.scenarioLibraries = new ScenarioLibraries();
         this.attachZip = false;
         this.rootPath = getFitnesseRootPath();
-        this.orangebeardClient = getOrangebeardClient();
+        this.orangebeardClient = createOrangebeardClient();
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
     }
 
@@ -114,7 +114,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.rootPath = rootPath;
         this.orangebeardProperties = new OrangebeardProperties();
         this.scenarioLibraries = new ScenarioLibraries();
-        this.orangebeardClient = getOrangebeardClient();
+        this.orangebeardClient = createOrangebeardClient();
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
     }
 
@@ -125,7 +125,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.orangebeardProperties = new OrangebeardProperties();
         this.scenarioLibraries = new ScenarioLibraries();
         this.rootPath = getFitnesseRootPath();
-        this.orangebeardClient = getOrangebeardClient();
+        this.orangebeardClient = createOrangebeardClient();
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
     }
 
@@ -136,7 +136,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         StartTestRun testrun = new StartTestRun(
                 orangebeardProperties.getTestSetName(),
                 orangebeardProperties.getDescription(),
-                getTestRunAttributes(testSystem.getName()), ChangedComponentsHelper.getChangedComponents());
+                getTestRunAttributes(testSystem.getName()),
+                ChangedComponentsHelper.getChangedComponents());
 
         this.runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testrun));
     }
@@ -251,7 +252,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
      */
     private void reset() {
         this.runContext = null;
-        this.orangebeardClient = getOrangebeardClient();
+        this.orangebeardClient = createOrangebeardClient();
     }
 
     @Override
@@ -388,7 +389,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return testItem.build();
     }
 
-    private OrangebeardClient getOrangebeardClient() {
+    private OrangebeardClient createOrangebeardClient() {
         ApiVersion apiVersion = determineApiVersion(propertyFileName);
         OrangebeardClient orangebeardClient;
         if (apiVersion == V2) {
