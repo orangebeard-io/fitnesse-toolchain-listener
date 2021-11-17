@@ -4,6 +4,7 @@ import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.LogLevel;
+import io.orangebeard.client.entity.StartTestRun;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.helper.AttachmentHandler;
 import io.orangebeard.listener.helper.ToolchainRunningContext;
@@ -11,8 +12,10 @@ import io.orangebeard.listener.helper.ToolchainRunningContext;
 import java.util.List;
 import java.util.UUID;
 import fitnesse.testrunner.WikiTestPage;
+import fitnesse.testsystems.TestSystem;
 import fitnesse.wiki.PageData;
 import fitnesse.wiki.WikiPage;
+import org.assertj.core.api.Assertions;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -20,6 +23,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -51,6 +55,43 @@ public class OrangebeardTestSystemListenerTest {
 
     @Mock
     private WikiTestPage testPage;
+
+    @Test
+    public void when_a_test_system_is_started_the_orangebeard_client_is_called() {
+        String testSetName = "testSetName";
+        String description = "desc";
+
+        TestSystem testSystem = mock(TestSystem.class);
+        when(testSystem.getName()).thenReturn("test system name");
+
+        when(orangebeardProperties.getTestSetName()).thenReturn(testSetName);
+        when(orangebeardProperties.getDescription()).thenReturn(description);
+
+        orangebeardTestSystemListener.testSystemStarted(testSystem);
+
+        ArgumentCaptor<StartTestRun> argumentCaptor = ArgumentCaptor.forClass(StartTestRun.class);
+        verify(orangebeardClient).startTestRun(argumentCaptor.capture());
+
+        assertThat(argumentCaptor.getValue().getName()).isEqualTo(testSetName);
+        assertThat(argumentCaptor.getValue().getDescription()).isEqualTo(description);
+        assertThat(argumentCaptor.getValue().getStartTime()).isNotNull();
+    }
+
+    @Test
+    public void when_a_test_system_is_started_changed_components_are_passed_along_if_available() throws Exception {
+        TestSystem testSystem = mock(TestSystem.class);
+        when(testSystem.getName()).thenReturn("test system name");
+
+        withEnvironmentVariable("orangebeard.changedComponents", "componentA, componentB")
+                .execute(() -> {
+                    orangebeardTestSystemListener.testSystemStarted(testSystem);
+
+                    ArgumentCaptor<StartTestRun> argumentCaptor = ArgumentCaptor.forClass(StartTestRun.class);
+                    verify(orangebeardClient).startTestRun(argumentCaptor.capture());
+
+                    Assertions.assertThat(argumentCaptor.getValue().getChangedComponents()).extracting("componentName").containsOnly("componentA", "componentB");
+                });
+    }
 
     @Test
     public void when_a_log_is_not_in_the_scenario_library_it_is_logged_separately() {

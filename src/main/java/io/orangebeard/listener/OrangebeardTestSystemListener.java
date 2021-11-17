@@ -76,8 +76,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private final OrangebeardProperties orangebeardProperties;
     private final ScenarioLibraries scenarioLibraries;
     private OrangebeardClient orangebeardClient;
+    private final AttachmentHandler attachmentHandler;
     private ToolchainRunningContext runContext;
-    private AttachmentHandler attachmentHandler;
 
     /**
      * constructor for testing purposes
@@ -102,6 +102,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.scenarioLibraries = new ScenarioLibraries();
         this.attachZip = false;
         this.rootPath = getFitnesseRootPath();
+        this.orangebeardClient = createOrangebeardClient();
+        this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
     }
 
     public OrangebeardTestSystemListener(@Nullable String propertyFileName, String rootPath) {
@@ -112,6 +114,8 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.rootPath = rootPath;
         this.orangebeardProperties = new OrangebeardProperties();
         this.scenarioLibraries = new ScenarioLibraries();
+        this.orangebeardClient = createOrangebeardClient();
+        this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
     }
 
     public OrangebeardTestSystemListener(String propertyFileName, boolean wikiTestRun) {
@@ -121,36 +125,19 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.orangebeardProperties = new OrangebeardProperties();
         this.scenarioLibraries = new ScenarioLibraries();
         this.rootPath = getFitnesseRootPath();
+        this.orangebeardClient = createOrangebeardClient();
+        this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
     }
 
     @Override
     public void testSystemStarted(TestSystem testSystem) {
         orangebeardProperties.checkPropertiesArePresent();
-        ApiVersion apiVersion = determineApiVersion(propertyFileName);
-        if (apiVersion == V2) {
-            this.orangebeardClient = new OrangebeardV2Client(
-                    orangebeardProperties.getEndpoint(),
-                    orangebeardProperties.getAccessToken(),
-                    orangebeardProperties.getProjectName(),
-                    orangebeardProperties.requiredValuesArePresent()
-            );
-        } else {
-            this.orangebeardClient = new OrangebeardV1Client(
-                    orangebeardProperties.getEndpoint(),
-                    orangebeardProperties.getAccessToken(),
-                    orangebeardProperties.getProjectName(),
-                    orangebeardProperties.requiredValuesArePresent()
-            );
-        }
-        logger.info("Listener api version {} is used", apiVersion);
-
-        this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
 
         StartTestRun testrun = new StartTestRun(
                 orangebeardProperties.getTestSetName(),
                 orangebeardProperties.getDescription(),
-                getTestRunAttributes(testSystem.getName())
-        );
+                getTestRunAttributes(testSystem.getName()),
+                ChangedComponentsHelper.getChangedComponents());
 
         this.runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testrun));
     }
@@ -259,9 +246,13 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         reset();
     }
 
+    /**
+     * Resets the context and client. Used when a FitNesse Run switches testsystems i.e. from FIT to SLiM.
+     * This results in starting e new Orangebeard run with a different testSytem attribute.
+     */
     private void reset() {
-        orangebeardClient = null;
-        runContext = null;
+        this.runContext = null;
+        this.orangebeardClient = createOrangebeardClient();
     }
 
     @Override
@@ -396,6 +387,26 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
 
         return testItem.build();
+    }
+
+    private OrangebeardClient createOrangebeardClient() {
+        ApiVersion apiVersion = determineApiVersion(propertyFileName);
+        OrangebeardClient orangebeardClient;
+        if (apiVersion == V2) {
+            orangebeardClient = new OrangebeardV2Client(
+                    orangebeardProperties.getEndpoint(),
+                    orangebeardProperties.getAccessToken(),
+                    orangebeardProperties.getProjectName(),
+                    orangebeardProperties.requiredValuesArePresent());
+        } else {
+            orangebeardClient = new OrangebeardV1Client(
+                    orangebeardProperties.getEndpoint(),
+                    orangebeardProperties.getAccessToken(),
+                    orangebeardProperties.getProjectName(),
+                    orangebeardProperties.requiredValuesArePresent());
+        }
+        logger.info("Listener api version {} is used", apiVersion);
+        return orangebeardClient;
     }
 
     private boolean attachZip() {

@@ -20,9 +20,9 @@ public class TypeConverter {
         //static class
     }
 
-    public static Set<Attribute> convertAttributes(String propTags) {
-        if (propTags != null && propTags.length() > 0) {
-            return Arrays.stream(propTags.split("\\s*[;,]\\s*"))
+    public static Set<Attribute> convertAttributes(String attributeString) {
+        if (attributeString != null && attributeString.length() > 0) {
+            return Arrays.stream(attributeString.split("\\s*[;,]\\s*"))
                     .map(Attribute::new)
                     .collect(Collectors.toSet());
         }
