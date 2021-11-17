@@ -15,7 +15,7 @@ public class ChangedComponentsHelperTest {
     public void without_the_environment_variable_the_list_of_changed_components_is_empty() {
         Set<ChangedComponent> result = ChangedComponentsHelper.getChangedComponents();
 
-        assertThat(result).isNull();
+        assertThat(result).isEmpty();
     }
 
     @Test

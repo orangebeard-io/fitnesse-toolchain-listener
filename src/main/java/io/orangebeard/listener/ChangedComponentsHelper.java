@@ -7,6 +7,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toSet;
 
 public class ChangedComponentsHelper {
@@ -23,7 +24,7 @@ public class ChangedComponentsHelper {
         }
         logger.info("Changed components: [" + changedComponents + "]");
         if (changedComponents == null) {
-            return null;
+            return emptySet();
         }
         return Arrays.stream(changedComponents
                 .split(","))
