@@ -77,7 +77,14 @@ with
 ````
 
 in the test that is started from your pipeline (which is probably `src/test/java/.../FixtureDebugTest.java`)
- 
+
+## Installation option 2 (as a FitNesse Plugin for local test execution)
+
+Make sure the jar-with dependencies is in your wiki/plugins directory.
+Add the endpoint, accessToken and projectName properties to your FitNesse instances plugins.properties (or custom properties file if you wish to configure it)
+
+Run FitNesse, the plugin will register itself and show the Orangebeard logo on your test and suite pages. Press the logo to run and report the outcome to Orangebeard. 
+
 ## Limitations
  - Currently, this runner/listener will start separate launches for each testsystem if you use >1 testsystem (i.e. Fit and Slim)in one suite
  - Full HTML report zip (or any other attachments) will not be saved when its size is exceeds 1 MB due to an api limitation
