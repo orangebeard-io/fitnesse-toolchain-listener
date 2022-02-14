@@ -27,7 +27,6 @@ public class OrangebeardEnabledSuiteResponder extends fitnesse.responders.run.Su
         for (Map.Entry<String, String> property : orangebeardProperties.entrySet()) {
             if(property.getValue() != null) {
                 System.setProperty(property.getKey(), property.getValue());
-                System.out.println(property.getKey() + ": " + property.getValue());
             }
         }
 
