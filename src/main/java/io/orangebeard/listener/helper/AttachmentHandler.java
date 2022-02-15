@@ -45,7 +45,7 @@ public class AttachmentHandler {
 
                     orangebeardClient.sendAttachment(attachment);
                 } catch (IOException | InvalidPathException e) {
-                    logger.warn("Unable to read attachment file for: " + attachments.group(1));
+                    logger.info("Unable to read attachment file for: " + attachments.group(1));
                 }
             }
         }
