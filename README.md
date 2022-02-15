@@ -34,12 +34,13 @@
 
 The listener is only compatible with Java 11+, so make sure you're running your FitNesse test with Java 11. 
  
-Add this project as a dependency to your pom:
+Add this project as a test dependency to your pom:
 ```xml
 <dependency>
     <groupId>io.orangebeard</groupId>
     <artifactId>fitnesse-toolchain-listener</artifactId>
     <version>version</version>
+    <scope>test</scope>
 </dependency>
 ```
 
@@ -77,7 +78,37 @@ with
 ````
 
 in the test that is started from your pipeline (which is probably `src/test/java/.../FixtureDebugTest.java`)
- 
+
+## Installation option 2 (as a FitNesse Plugin for local test execution)
+
+Make sure the jar-with dependencies is in your wiki/plugins directory.
+If you use maven, you can use the following execution for the maven-dependency-plugin to do it:
+```xml
+ <execution>
+    <id>copy-plugin</id>
+    <phase>generate-resources</phase>
+    <goals>
+        <goal>copy</goal>
+    </goals>
+    <configuration>
+        <artifactItems>
+            <artifactItem>
+                <groupId>io.orangebeard</groupId>
+                <artifactId>fitnesse-toolchain-listener</artifactId>
+                <version>version</version>
+                <classifier>jar-with-dependencies</classifier>
+                <overWrite>true</overWrite>
+            </artifactItem>
+        </artifactItems>
+        <outputDirectory>${project.basedir}/wiki/plugins</outputDirectory>
+    </configuration>
+</execution>
+```
+
+Add the endpoint, accessToken and projectName properties to your FitNesse instances `plugins.properties` (or custom properties file if you wish to configure it)
+
+Run FitNesse, the plugin will register itself and show the Orangebeard logo on your test and suite pages. Press the logo to run and report the outcome to Orangebeard. 
+
 ## Limitations
  - Currently, this runner/listener will start separate launches for each testsystem if you use >1 testsystem (i.e. Fit and Slim)in one suite
  - Full HTML report zip (or any other attachments) will not be saved when its size is exceeds 1 MB due to an api limitation
