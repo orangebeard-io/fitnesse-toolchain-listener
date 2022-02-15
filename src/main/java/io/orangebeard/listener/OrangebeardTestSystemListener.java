@@ -237,6 +237,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testSystemStopped(TestSystem testSystem, Throwable throwable) {
         logger.info("Number of logs: {}", numberOfLogs);
+        numberOfLogs = 0;
         stopAllSuites();
         orangebeardClient.finishTestRun(runContext.getTestRunUUID(), new FinishTestRun());
 

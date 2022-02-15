@@ -1,6 +1,7 @@
 package io.orangebeard.listener.responders.run;
 
 import io.orangebeard.listener.OrangebeardTestSystemListener;
+import io.orangebeard.listener.helper.OrangebeardPropertyHelper;
 
 import fitnesse.FitNesseContext;
 import fitnesse.http.Request;
@@ -15,6 +16,8 @@ public class OrangebeardEnabledTestResponder extends fitnesse.responders.run.Tes
         OrangebeardPropertyHelper.setOrangebeardSystemProperties(context.variableSource);
         OrangebeardPropertyHelper.setTestSetName(request.getResource());
         OrangebeardPropertyHelper.setDescription("Single test executed from wiki");
+        OrangebeardPropertyHelper.setAttributesFromQueryString(request.getQueryString());
+
         orangebeardListener = new OrangebeardTestSystemListener("orangebeard.properties", true);
 
         return super.makeResponse(context, request);
