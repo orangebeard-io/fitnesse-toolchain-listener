@@ -2,7 +2,6 @@ package io.orangebeard.listener;
 
 import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
-import io.orangebeard.client.OrangebeardV1Client;
 import io.orangebeard.client.OrangebeardV2Client;
 import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.FinishTestItem;
@@ -12,7 +11,6 @@ import io.orangebeard.client.entity.LogLevel;
 import io.orangebeard.client.entity.StartTestItem;
 import io.orangebeard.client.entity.StartTestRun;
 import io.orangebeard.client.entity.TestItemType;
-import io.orangebeard.listener.entity.ApiVersion;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.entity.Suite;
 import io.orangebeard.listener.helper.AttachmentHandler;
@@ -24,7 +22,6 @@ import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -50,8 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static fitnesse.testsystems.ExecutionResult.getExecutionResult;
-import static io.orangebeard.listener.entity.ApiVersion.V1;
-import static io.orangebeard.listener.entity.ApiVersion.V2;
 import static io.orangebeard.listener.helper.TestPageHelper.getRelativeName;
 import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
 import static io.orangebeard.listener.helper.TypeConverter.convertAttributes;
@@ -162,17 +157,19 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         //Workaround for corner case where table contains binary representation with 0x00 unicode chars
         enrichedLog = enrichedLog.replace("\u0000", "");
 
-        Log logItem = Log.builder()
-                .message(enrichedLog)
-                .itemUuid(testId)
-                .testRunUUID(runContext.getTestRunUUID())
-                .logLevel(logLevel)
-                .time(LocalDateTime.now())
-                .build();
+        if (orangebeardProperties.logShouldBeDispatchedToOrangebeard(logLevel)) {
+            Log logItem = Log.builder()
+                    .message(enrichedLog)
+                    .itemUuid(testId)
+                    .testRunUUID(runContext.getTestRunUUID())
+                    .logLevel(logLevel)
+                    .time(LocalDateTime.now())
+                    .build();
 
-        orangebeardClient.log(logItem);
-        numberOfLogs++;
-        attachmentHandler.attachFilesIfPresent(testId, runContext.getTestRunUUID(), log);
+            orangebeardClient.log(logItem);
+            numberOfLogs++;
+            attachmentHandler.attachFilesIfPresent(testId, runContext.getTestRunUUID(), log);
+        }
     }
 
     @Override
@@ -205,25 +202,28 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private void logScenarioLibraries(UUID testUUID, List<WikiPage> scenarioLibraries) {
-        for (WikiPage scenarioLibrary : scenarioLibraries) {
-            String log = scenarioLibrary.getHtml();
+        if (orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)) {
 
-            log = OrangebeardTableLogParser.applyOrangebeardTableStyling(log);
-            String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
+            for (WikiPage scenarioLibrary : scenarioLibraries) {
+                String log = scenarioLibrary.getHtml();
 
-            //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-            enrichedLog = enrichedLog.replace("\u0000", "");
+                log = OrangebeardTableLogParser.applyOrangebeardTableStyling(log);
+                String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
 
-            Log logItem = Log.builder()
-                    .message(enrichedLog)
-                    .itemUuid(testUUID)
-                    .testRunUUID(runContext.getTestRunUUID())
-                    .logLevel(LogLevel.debug)
-                    .time(LocalDateTime.now())
-                    .build();
+                //Workaround for corner case where table contains binary representation with 0x00 unicode chars
+                enrichedLog = enrichedLog.replace("\u0000", "");
 
-            orangebeardClient.log(logItem);
-            numberOfLogs++;
+                Log logItem = Log.builder()
+                        .message(enrichedLog)
+                        .itemUuid(testUUID)
+                        .testRunUUID(runContext.getTestRunUUID())
+                        .logLevel(LogLevel.debug)
+                        .time(LocalDateTime.now())
+                        .build();
+
+                orangebeardClient.log(logItem);
+                numberOfLogs++;
+            }
         }
     }
 
@@ -391,23 +391,11 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private OrangebeardClient createOrangebeardClient() {
-        ApiVersion apiVersion = determineApiVersion(propertyFileName);
-        OrangebeardClient orangebeardClient;
-        if (apiVersion == V2) {
-            orangebeardClient = new OrangebeardV2Client(
-                    orangebeardProperties.getEndpoint(),
-                    orangebeardProperties.getAccessToken(),
-                    orangebeardProperties.getProjectName(),
-                    orangebeardProperties.requiredValuesArePresent());
-        } else {
-            orangebeardClient = new OrangebeardV1Client(
-                    orangebeardProperties.getEndpoint(),
-                    orangebeardProperties.getAccessToken(),
-                    orangebeardProperties.getProjectName(),
-                    orangebeardProperties.requiredValuesArePresent());
-        }
-        logger.info("Listener api version {} is used", apiVersion);
-        return orangebeardClient;
+        return new OrangebeardV2Client(
+                orangebeardProperties.getEndpoint(),
+                orangebeardProperties.getAccessToken(),
+                orangebeardProperties.getProjectName(),
+                orangebeardProperties.requiredValuesArePresent());
     }
 
     private boolean attachZip() {
@@ -419,23 +407,5 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             //keep value
         }
         return false;
-    }
-
-    private ApiVersion determineApiVersion(String propertyFileName) {
-        try {
-            Properties properties = new Properties();
-            InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propertyFileName);
-
-            if (inputStream != null) {
-                properties.load(inputStream);
-            }
-            String api = properties.getProperty("orangebeard.api");
-            if (api != null && api.toUpperCase().equals(V2.toString())) {
-                return V2;
-            }
-            return V1;
-        } catch (IOException e) {
-            return V1;
-        }
     }
 }

@@ -95,6 +95,7 @@ public class OrangebeardTestSystemListenerTest {
 
     @Test
     public void when_a_log_is_not_in_the_scenario_library_it_is_logged_separately() {
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)).thenReturn(true);
         when(scenarioLibraries.contains(any())).thenReturn(false);
 
         orangebeardTestSystemListener.testOutputChunk(testPage, "");
@@ -121,6 +122,8 @@ public class OrangebeardTestSystemListenerTest {
 
     @Test
     public void when_a_table_is_logged_and_it_is_an_error_loglevel_becomes_error() {
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.error)).thenReturn(true);
+
         orangebeardTestSystemListener.testOutputChunk(testPage, "<table class=\"error\"></table>");
 
         ArgumentCaptor<Log> argumentCaptor = ArgumentCaptor.forClass(Log.class);
@@ -130,7 +133,16 @@ public class OrangebeardTestSystemListenerTest {
     }
 
     @Test
+    public void when_a_table_is_logged_and_it_is_an_warn_loglevel_it_is_not_sent_to_orangebeard_when_this_should_not_be_the_case() {
+        orangebeardTestSystemListener.testOutputChunk(testPage, "<table class=\"warn\"></table>");
+
+        verify(orangebeardClient, times(0)).log(any());
+    }
+
+    @Test
     public void weird_characters_are_removed_from_the_log_and_orangebeard_styling_is_applied_on_tables() {
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.error)).thenReturn(true);
+
         orangebeardTestSystemListener.testOutputChunk(testPage, "<table class=\"error\">\u0000</table>");
 
         ArgumentCaptor<Log> argumentCaptor = ArgumentCaptor.forClass(Log.class);
@@ -155,6 +167,7 @@ public class OrangebeardTestSystemListenerTest {
 
     @Test
     public void when_a_test_is_started_related_scenario_libraries_are_logged_on_debug_level() {
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)).thenReturn(true);
         WikiPage scenarioLibrary = mock(WikiPage.class);
         when(scenarioLibrary.getHtml()).thenReturn("<table class=\"error\">\u0000</table>");
 
@@ -173,5 +186,22 @@ public class OrangebeardTestSystemListenerTest {
 
         assertThat(argumentCaptor.getValue().getLogLevel()).isEqualTo(LogLevel.debug);
         assertThat(argumentCaptor.getValue().getMessage()).isEqualTo("<table style=\"background-color:#ffe67b; padding: 3px; border-radius: 3px;\"></table>");
+    }
+
+    @Test
+    public void when_the_log_level_is_above_debug_scenario_libraries_are_not_logged() {
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)).thenReturn(false);
+        WikiPage scenarioLibrary = mock(WikiPage.class);
+
+        when(testPage.getFullPath()).thenReturn("test");
+        when(testPage.getName()).thenReturn("test");
+        when(runningContext.getSuiteId(any())).thenReturn(UUID.fromString("f07908f8-70c4-4c10-ae27-771a8372a0ef"));
+        when(testPage.getData()).thenReturn(mock(PageData.class));
+
+        when(testPage.getScenarioLibraries()).thenReturn(List.of(scenarioLibrary));
+
+        orangebeardTestSystemListener.testStarted(testPage);
+
+        verify(orangebeardClient, times(0)).log(any());
     }
 }
