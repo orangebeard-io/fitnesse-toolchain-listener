@@ -128,48 +128,65 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     public void testSystemStarted(TestSystem testSystem) {
         orangebeardProperties.checkPropertiesArePresent();
 
-        StartTestRun testrun = new StartTestRun(
+        StartTestRun testRun = new StartTestRun(
                 orangebeardProperties.getTestSetName(),
                 orangebeardProperties.getDescription(),
                 getTestRunAttributes(testSystem.getName()),
                 ChangedComponentsHelper.getChangedComponents());
 
-        this.runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testrun));
+        this.runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testRun));
     }
 
     @Override
     public void testOutputChunk(TestPage testPage, String chunk) {
         String log = OrangebeardTableLogParser.removeNonTableProlog(chunk);
         UUID testId = runContext.getTestId(runContext.getLatestTestName());
-
         updateScenarioLibraries(testPage);
+
         if (scenarioLibraries.contains(log)) {
             return;
         }
-        LogLevel logLevel = LogLevel.debug;
-
-        if (log.toLowerCase().contains("<table")) {
-            logLevel = OrangebeardTableLogParser.getLogLevel(log);
-            log = OrangebeardTableLogParser.applyOrangebeardTableStyling(log);
-        }
-
-        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
-        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-        enrichedLog = enrichedLog.replace("\u0000", "");
-
+        String logMessage = parseLogMessage(log);
+        LogLevel logLevel = getLogLevel(log);
         if (orangebeardProperties.logShouldBeDispatchedToOrangebeard(logLevel)) {
             Log logItem = Log.builder()
-                    .message(enrichedLog)
+                    .message(logMessage)
                     .itemUuid(testId)
                     .testRunUUID(runContext.getTestRunUUID())
                     .logLevel(logLevel)
                     .time(LocalDateTime.now())
                     .build();
-
-            orangebeardClient.log(logItem);
-            numberOfLogs++;
-            attachmentHandler.attachFilesIfPresent(testId, runContext.getTestRunUUID(), log);
+            if (orangebeardProperties.isLogsAtEndOfTest() && !attachmentHandler.hasFilesToAttach(log)) {
+                stackLogItem(testId, logItem);
+            } else {
+                orangebeardClient.log(logItem);
+                numberOfLogs++;
+                attachmentHandler.attachFilesIfPresent(testId, runContext.getTestRunUUID(), log);
+            }
         }
+    }
+
+    private void stackLogItem(UUID testId, Log logItem) {
+
+    }
+
+    private LogLevel getLogLevel(String logMessage) {
+        if (logMessage.toLowerCase().contains("<table")) {
+            return OrangebeardTableLogParser.getLogLevel(logMessage);
+        }
+        return LogLevel.debug;
+    }
+
+    private String parseLogMessage(String chunk) {
+        String log = OrangebeardTableLogParser.removeNonTableProlog(chunk);
+
+        if (log.toLowerCase().contains("<table")) {
+            log = OrangebeardTableLogParser.applyOrangebeardTableStyling(log);
+        }
+
+        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
+        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
+        return enrichedLog.replace("\u0000", "");
     }
 
     @Override
