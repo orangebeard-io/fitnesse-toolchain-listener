@@ -157,7 +157,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                     .time(LocalDateTime.now())
                     .build();
             if (orangebeardProperties.isLogsAtEndOfTest() && !attachmentHandler.hasFilesToAttach(log)) {
-                stackLogItem(testId, logItem);
+                stashLogItem(testId, logItem);
             } else {
                 orangebeardClient.log(logItem);
                 numberOfLogs++;
@@ -166,7 +166,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
     }
 
-    private void stackLogItem(UUID testId, Log logItem) {
+    private void stashLogItem(UUID testId, Log logItem) {
 
     }
 
