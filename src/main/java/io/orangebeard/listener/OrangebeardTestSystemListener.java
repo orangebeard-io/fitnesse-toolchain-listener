@@ -118,11 +118,19 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
     }
 
-    public OrangebeardTestSystemListener(String propertyFileName, boolean wikiTestRun) {
+    public OrangebeardTestSystemListener(String propertyFileName) {
         this.propertyFileName = propertyFileName;
         this.attachZip = attachZip();
-        this.wikiTestRun = wikiTestRun;
         this.orangebeardProperties = new OrangebeardProperties();
+        this.scenarioLibraries = new ScenarioLibraries();
+        this.rootPath = getFitnesseRootPath();
+        this.orangebeardClient = createOrangebeardClient();
+        this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
+    }
+
+    public OrangebeardTestSystemListener(OrangebeardProperties orangebeardProperties){
+        this.attachZip = attachZip();
+        this.orangebeardProperties = orangebeardProperties;
         this.scenarioLibraries = new ScenarioLibraries();
         this.rootPath = getFitnesseRootPath();
         this.orangebeardClient = createOrangebeardClient();
