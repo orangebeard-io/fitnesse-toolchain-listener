@@ -14,6 +14,7 @@ import io.orangebeard.client.entity.TestItemType;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.entity.Suite;
 import io.orangebeard.listener.helper.AttachmentHandler;
+import io.orangebeard.listener.helper.LogStasher;
 import io.orangebeard.listener.helper.OrangebeardTableLogParser;
 import io.orangebeard.listener.helper.TestPageHelper;
 import io.orangebeard.listener.helper.ToolchainRunningContext;
@@ -57,21 +58,20 @@ import static java.util.Objects.requireNonNull;
 public class OrangebeardTestSystemListener implements TestSystemListener, Closeable {
     private final Logger logger = LoggerFactory.getLogger(OrangebeardTestSystemListener.class);
     private static final String PROP_ROOT_PATH = "fitnesseroot.path";
-    private static final String PROP_ATTACH_ZIP = "attach.zipfile";
     private static final String USER_DIR_PROPERTY = "user.dir";
-    private final boolean attachZip;
     private final String rootPath;
     private String propertyFileName = "orangebeard.properties";
     /**
      * Property that determines whether or not the test run is run from the browser in the wiki or not.
      */
     private boolean wikiTestRun = false;
-    private static int numberOfLogs = 0;
+    private static int numberOfLogRequests = 0;
 
     private final OrangebeardProperties orangebeardProperties;
     private final ScenarioLibraries scenarioLibraries;
-    private OrangebeardClient orangebeardClient;
     private final AttachmentHandler attachmentHandler;
+    private final LogStasher logStasher;
+    private OrangebeardClient orangebeardClient;
     private ToolchainRunningContext runContext;
 
     /**
@@ -82,46 +82,47 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             ToolchainRunningContext runContext,
             OrangebeardClient orangebeardClient,
             AttachmentHandler attachmentHandler,
-            ScenarioLibraries scenarioLibraries) {
+            ScenarioLibraries scenarioLibraries,
+            LogStasher logStasher) {
         this.orangebeardProperties = orangebeardProperties;
         this.runContext = runContext;
         this.orangebeardClient = orangebeardClient;
         this.attachmentHandler = attachmentHandler;
         this.scenarioLibraries = scenarioLibraries;
-        this.attachZip = false;
-        this.rootPath = getFitnesseRootPath();
+        this.logStasher = logStasher;
+        this.rootPath = getFitnesseRootPath(propertyFileName);
     }
 
     public OrangebeardTestSystemListener() {
         this.orangebeardProperties = new OrangebeardProperties();
         this.scenarioLibraries = new ScenarioLibraries();
-        this.attachZip = false;
-        this.rootPath = getFitnesseRootPath();
-        this.orangebeardClient = createOrangebeardClient();
+        this.rootPath = getFitnesseRootPath(propertyFileName);
+        this.orangebeardClient = createOrangebeardClient(orangebeardProperties);
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
+        this.logStasher = new LogStasher(orangebeardClient);
     }
 
     public OrangebeardTestSystemListener(@Nullable String propertyFileName, String rootPath) {
         if (propertyFileName != null) {
             this.propertyFileName = propertyFileName;
         }
-        this.attachZip = attachZip();
         this.rootPath = rootPath;
         this.orangebeardProperties = new OrangebeardProperties();
         this.scenarioLibraries = new ScenarioLibraries();
-        this.orangebeardClient = createOrangebeardClient();
+        this.orangebeardClient = createOrangebeardClient(orangebeardProperties);
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
+        this.logStasher = new LogStasher(orangebeardClient);
     }
 
     public OrangebeardTestSystemListener(String propertyFileName, boolean wikiTestRun) {
         this.propertyFileName = propertyFileName;
-        this.attachZip = attachZip();
         this.wikiTestRun = wikiTestRun;
         this.orangebeardProperties = new OrangebeardProperties();
         this.scenarioLibraries = new ScenarioLibraries();
-        this.rootPath = getFitnesseRootPath();
-        this.orangebeardClient = createOrangebeardClient();
+        this.rootPath = getFitnesseRootPath(propertyFileName);
+        this.orangebeardClient = createOrangebeardClient(orangebeardProperties);
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
+        this.logStasher = new LogStasher(orangebeardClient);
     }
 
     @Override
@@ -146,7 +147,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         if (scenarioLibraries.contains(log)) {
             return;
         }
-        String logMessage = parseLogMessage(log);
+        String logMessage = OrangebeardTableLogParser.parseLogMessage(log, rootPath);
         LogLevel logLevel = getLogLevel(log);
         if (orangebeardProperties.logShouldBeDispatchedToOrangebeard(logLevel)) {
             Log logItem = Log.builder()
@@ -157,17 +158,13 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                     .time(LocalDateTime.now())
                     .build();
             if (orangebeardProperties.isLogsAtEndOfTest() && !attachmentHandler.hasFilesToAttach(log)) {
-                stashLogItem(testId, logItem);
+                logStasher.stashLogItem(testId, logItem);
             } else {
                 orangebeardClient.log(logItem);
-                numberOfLogs++;
+                numberOfLogRequests++;
                 attachmentHandler.attachFilesIfPresent(testId, runContext.getTestRunUUID(), log);
             }
         }
-    }
-
-    private void stashLogItem(UUID testId, Log logItem) {
-
     }
 
     private LogLevel getLogLevel(String logMessage) {
@@ -175,18 +172,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             return OrangebeardTableLogParser.getLogLevel(logMessage);
         }
         return LogLevel.debug;
-    }
-
-    private String parseLogMessage(String chunk) {
-        String log = OrangebeardTableLogParser.removeNonTableProlog(chunk);
-
-        if (log.toLowerCase().contains("<table")) {
-            log = OrangebeardTableLogParser.applyOrangebeardTableStyling(log);
-        }
-
-        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
-        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-        return enrichedLog.replace("\u0000", "");
     }
 
     @Override
@@ -206,14 +191,12 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         UUID testId = runContext.getTestId(testName);
         ExecutionResult result = getExecutionResult(getRelativeName(testPage), testSummary);
         if (runContext.hasTest(testName)) {
-            FinishTestItem item = new FinishTestItem(
-                    runContext.getTestRunUUID(),
-                    convertTestResultStatus(result),
-                    null,
-                    null
-            );
-
-            orangebeardClient.finishTestItem(testId, item);
+            FinishTestItem finishedTestItem = new FinishTestItem(runContext.getTestRunUUID(), convertTestResultStatus(result));
+            if (orangebeardProperties.isLogsAtEndOfTest()) {
+                logStasher.sendLogs(testId);
+                numberOfLogRequests++;
+            }
+            orangebeardClient.finishTestItem(testId, finishedTestItem);
             runContext.remove(testName);
         }
     }
@@ -239,7 +222,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                         .build();
 
                 orangebeardClient.log(logItem);
-                numberOfLogs++;
+                numberOfLogRequests++;
             }
         }
     }
@@ -253,14 +236,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     @Override
     public void testSystemStopped(TestSystem testSystem, Throwable throwable) {
-        logger.info("Number of logs: {}", numberOfLogs);
-        numberOfLogs = 0;
+        logger.info("Number of log requests: {}", numberOfLogRequests);
+        numberOfLogRequests = 0;
         stopAllSuites();
         orangebeardClient.finishTestRun(runContext.getTestRunUUID(), new FinishTestRun());
-
-        if (attachZip) {
-            attachmentHandler.attachFitNesseResultsToRun(runContext.getTestRunUUID());
-        }
         reset();
     }
 
@@ -270,7 +249,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
      */
     private void reset() {
         this.runContext = null;
-        this.orangebeardClient = createOrangebeardClient();
+        this.orangebeardClient = createOrangebeardClient(orangebeardProperties);
     }
 
     @Override
@@ -363,7 +342,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return tags;
     }
 
-    private String getFitnesseRootPath() {
+    private static String getFitnesseRootPath(String propertyFileName) {
         Properties propertyFile = new Properties();
         String defaultRoot;
         if (System.getProperty(USER_DIR_PROPERTY).endsWith("wiki")) {
@@ -374,7 +353,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         String fitnesseRootPath = System.getProperty(PROP_ROOT_PATH);
         if (fitnesseRootPath == null) {
             try {
-                propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.propertyFileName)));
+                propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(propertyFileName)));
                 fitnesseRootPath = propertyFile.getProperty(PROP_ROOT_PATH) != null ? propertyFile.getProperty(PROP_ROOT_PATH) : defaultRoot;
             } catch (NullPointerException | IOException e) {
                 fitnesseRootPath = defaultRoot;
@@ -407,22 +386,11 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return testItem.build();
     }
 
-    private OrangebeardClient createOrangebeardClient() {
+    private static OrangebeardClient createOrangebeardClient(OrangebeardProperties orangebeardProperties) {
         return new OrangebeardV2Client(
                 orangebeardProperties.getEndpoint(),
                 orangebeardProperties.getAccessToken(),
                 orangebeardProperties.getProjectName(),
                 orangebeardProperties.requiredValuesArePresent());
-    }
-
-    private boolean attachZip() {
-        try {
-            Properties propertyFile = new Properties();
-            propertyFile.load(requireNonNull(OrangebeardTestSystemListener.class.getClassLoader().getResourceAsStream(this.propertyFileName)));
-            return propertyFile.getProperty(PROP_ATTACH_ZIP) != null ? Boolean.parseBoolean(propertyFile.getProperty(PROP_ROOT_PATH)) : attachZip;
-        } catch (NullPointerException | IOException e) {
-            //keep value
-        }
-        return false;
     }
 }

@@ -16,6 +16,19 @@ public class OrangebeardTableLogParser {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(OrangebeardTableLogParser.class);
 
+    public static String parseLogMessage(String chunk, String rootPath) {
+        String log = removeNonTableProlog(chunk);
+
+        if (log.toLowerCase().contains("<table")) {
+            log = applyOrangebeardTableStyling(log);
+        }
+
+        String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
+        //Workaround for corner case where table contains binary representation with 0x00 unicode chars
+        return enrichedLog.replace("\u0000", "");
+    }
+
+
     public static String embedImagesAndStripHyperlinks(String html, String rootPath) {
         Pattern imgPattern = Pattern.compile("(<img(\\s+.*?)?\\s+src=\"(.*?)\".*?/>)", Pattern.CASE_INSENSITIVE);
         html = html.replaceAll("<a.+?>(.+?)</a>", "$1");

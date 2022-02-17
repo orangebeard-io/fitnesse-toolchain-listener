@@ -7,10 +7,6 @@ import fitnesse.wiki.PageCrawler;
 
 public class TestPageHelper {
 
-    //hide!
-    private TestPageHelper() {
-    }
-
     public static String getFullTestName(TestPage testPage) {
         return testPage.getFullPath();
     }
