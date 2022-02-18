@@ -99,7 +99,7 @@ public class OrangebeardTestSystemListenerTest {
 
         orangebeardTestSystemListener.testOutputChunk(testPage, "");
 
-        verify(orangebeardClient, times(1)).log(any());
+        verify(orangebeardClient, times(1)).log(any(Log.class));
         verify(orangebeardLogger).attachFilesIfPresent(any(), any(), any());
     }
 
@@ -109,7 +109,7 @@ public class OrangebeardTestSystemListenerTest {
 
         orangebeardTestSystemListener.testOutputChunk(testPage, "");
 
-        verify(orangebeardClient, times(0)).log(any());
+        verify(orangebeardClient, times(0)).log(any(Log.class));
     }
 
     @Test
