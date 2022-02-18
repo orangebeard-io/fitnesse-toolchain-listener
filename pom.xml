@@ -38,7 +38,7 @@
         <!--dependency versions-->
         <fitnesse.version>20211030</fitnesse.version>
         <hsac.version>5.0.0</hsac.version>
-        <java.client.version>1.2.2-SNAPSHOT</java.client.version>
+        <java.client.version>1.2.2</java.client.version>
     </properties>
 
     <dependencies>
