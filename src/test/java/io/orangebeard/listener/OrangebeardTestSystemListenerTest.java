@@ -100,7 +100,7 @@ public class OrangebeardTestSystemListenerTest {
 
         orangebeardTestSystemListener.testOutputChunk(testPage, "");
 
-        verify(orangebeardClient, times(1)).log(any());
+        verify(orangebeardClient, times(1)).log(any(Log.class));
         verify(orangebeardLogger).attachFilesIfPresent(any(), any(), any());
     }
 
@@ -110,7 +110,7 @@ public class OrangebeardTestSystemListenerTest {
 
         orangebeardTestSystemListener.testOutputChunk(testPage, "");
 
-        verify(orangebeardClient, times(0)).log(any());
+        verify(orangebeardClient, times(0)).log(any(Log.class));
     }
 
     @Test
@@ -136,7 +136,7 @@ public class OrangebeardTestSystemListenerTest {
     public void when_a_table_is_logged_and_it_is_an_warn_loglevel_it_is_not_sent_to_orangebeard_when_this_should_not_be_the_case() {
         orangebeardTestSystemListener.testOutputChunk(testPage, "<table class=\"warn\"></table>");
 
-        verify(orangebeardClient, times(0)).log(any());
+        verify(orangebeardClient, times(0)).log(any(Log.class));
     }
 
     @Test
@@ -202,6 +202,6 @@ public class OrangebeardTestSystemListenerTest {
 
         orangebeardTestSystemListener.testStarted(testPage);
 
-        verify(orangebeardClient, times(0)).log(any());
+        verify(orangebeardClient, times(0)).log(any(Log.class));
     }
 }
