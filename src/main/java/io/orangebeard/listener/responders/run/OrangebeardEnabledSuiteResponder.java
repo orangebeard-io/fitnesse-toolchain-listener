@@ -1,25 +1,41 @@
 package io.orangebeard.listener.responders.run;
 
+import io.orangebeard.client.OrangebeardProperties;
+import io.orangebeard.client.entity.LogLevel;
 import io.orangebeard.listener.OrangebeardTestSystemListener;
 import io.orangebeard.listener.helper.OrangebeardPropertyHelper;
 
+import java.util.UUID;
 import fitnesse.FitNesseContext;
 import fitnesse.http.Request;
 import fitnesse.http.Response;
 import fitnesse.testrunner.MultipleTestsRunner;
 
+import static io.orangebeard.client.OrangebeardProperty.ACCESS_TOKEN;
+import static io.orangebeard.client.OrangebeardProperty.ENDPOINT;
+import static io.orangebeard.client.OrangebeardProperty.LOGS_AT_END_OF_TEST;
+import static io.orangebeard.client.OrangebeardProperty.LOG_LEVEL;
+import static io.orangebeard.client.OrangebeardProperty.PROJECT;
+
 public class OrangebeardEnabledSuiteResponder extends fitnesse.responders.run.SuiteResponder {
     private OrangebeardTestSystemListener orangebeardListener;
 
     @Override
-    public Response makeResponse(FitNesseContext context, Request request) throws Exception {
-        OrangebeardPropertyHelper.setOrangebeardSystemProperties(context.variableSource);
-        OrangebeardPropertyHelper.setTestSetName(request.getResource());
-        OrangebeardPropertyHelper.setAttributesFromQueryString(request.getQueryString());
+    public Response makeResponse(FitNesseContext fitNesseProperties, Request request) throws Exception {
 
-        orangebeardListener = new OrangebeardTestSystemListener("orangebeard.properties", true);
+        var orangebeardProperties = new OrangebeardProperties(
+                fitNesseProperties.getProperty(ENDPOINT.getPropertyName()),
+                UUID.fromString(fitNesseProperties.getProperty(ACCESS_TOKEN.getPropertyName())),
+                fitNesseProperties.getProperty(PROJECT.getPropertyName()),
+                request.getResource(),
+                "",
+                OrangebeardPropertyHelper.getAttributesFromQueryString(request.getQueryString()),
+                OrangebeardPropertyHelper.getlogLevelFromStringOrElse(fitNesseProperties.getProperty(LOG_LEVEL.getPropertyName()), LogLevel.debug),
+                Boolean.parseBoolean(fitNesseProperties.getProperty(LOGS_AT_END_OF_TEST.getPropertyName())));
 
-        return super.makeResponse(context, request);
+        orangebeardListener = new OrangebeardTestSystemListener(orangebeardProperties);
+
+        return super.makeResponse(fitNesseProperties, request);
     }
 
     @Override

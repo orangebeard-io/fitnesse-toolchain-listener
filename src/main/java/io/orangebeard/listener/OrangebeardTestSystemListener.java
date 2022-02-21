@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -62,10 +61,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private final boolean attachZip;
     private final String rootPath;
     private String propertyFileName = "orangebeard.properties";
-    /**
-     * Property that determines whether or not the test run is run from the browser in the wiki or not.
-     */
-    private boolean wikiTestRun = false;
+
     private static int numberOfLogs = 0;
 
     private final OrangebeardProperties orangebeardProperties;
@@ -92,15 +88,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.rootPath = getFitnesseRootPath();
     }
 
-    public OrangebeardTestSystemListener() {
-        this.orangebeardProperties = new OrangebeardProperties();
-        this.scenarioLibraries = new ScenarioLibraries();
-        this.attachZip = false;
-        this.rootPath = getFitnesseRootPath();
-        this.orangebeardClient = createOrangebeardClient();
-        this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
-    }
-
     public OrangebeardTestSystemListener(@Nullable String propertyFileName, String rootPath) {
         if (propertyFileName != null) {
             this.propertyFileName = propertyFileName;
@@ -113,11 +100,9 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
     }
 
-    public OrangebeardTestSystemListener(String propertyFileName, boolean wikiTestRun) {
-        this.propertyFileName = propertyFileName;
+    public OrangebeardTestSystemListener(OrangebeardProperties orangebeardProperties) {
         this.attachZip = attachZip();
-        this.wikiTestRun = wikiTestRun;
-        this.orangebeardProperties = new OrangebeardProperties();
+        this.orangebeardProperties = orangebeardProperties;
         this.scenarioLibraries = new ScenarioLibraries();
         this.rootPath = getFitnesseRootPath();
         this.orangebeardClient = createOrangebeardClient();
@@ -258,7 +243,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     @Override
     public void testAssertionVerified(Assertion assertion, TestResult testResult) {
-
     }
 
     @Override
@@ -267,7 +251,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     @Override
     public void close() {
-
     }
 
     private UUID getAndOrStartSuite(WikiTestPage testPage) {
@@ -278,7 +261,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
         for (String suite : suites) {
             UUID parentSuiteId = runContext.getSuiteId(suitePath);
-            suitePath = suitePath + "." + suite;
+            suitePath = String.format("%s.%s", suitePath, suite);
             suiteId = runContext.getSuiteId(suitePath);
             if (suiteId == null) {
                 String description = null;
@@ -339,9 +322,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private Set<Attribute> getTestRunAttributes(String testSystemName) {
         Set<Attribute> tags = new HashSet<>(orangebeardProperties.getAttributes());
         tags.add(new Attribute("Test System", testSystemName));
-        if (wikiTestRun) {
-            tags.add(new Attribute("wiki", InetAddress.getLocalHost().getHostName()));
-        }
 
         return tags;
     }
