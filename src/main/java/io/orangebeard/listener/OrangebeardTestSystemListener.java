@@ -52,6 +52,7 @@ import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
 import static io.orangebeard.listener.helper.TypeConverter.convertAttributes;
 import static io.orangebeard.listener.helper.TypeConverter.convertTestResultStatus;
 import static io.orangebeard.listener.helper.TypeConverter.determinePageType;
+import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
 public class OrangebeardTestSystemListener implements TestSystemListener, Closeable {
@@ -91,6 +92,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     public OrangebeardTestSystemListener() {
         this.orangebeardProperties = new OrangebeardProperties();
+        logger.info(format("Log level is set to: %s", orangebeardProperties.getLogLevel()));
         this.scenarioLibraries = new ScenarioLibraries();
         this.rootPath = getFitnesseRootPath(propertyFileName);
         this.orangebeardClient = createOrangebeardClient(orangebeardProperties);
@@ -104,6 +106,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
         this.rootPath = rootPath;
         this.orangebeardProperties = new OrangebeardProperties();
+        logger.info(format("Log level is set to: %s", orangebeardProperties.getLogLevel()));
         this.scenarioLibraries = new ScenarioLibraries();
         this.orangebeardClient = createOrangebeardClient(orangebeardProperties);
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
@@ -112,6 +115,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     public OrangebeardTestSystemListener(OrangebeardProperties orangebeardProperties) {
         this.orangebeardProperties = orangebeardProperties;
+        logger.info(format("Log level is set to: %s", orangebeardProperties.getLogLevel()));
         this.scenarioLibraries = new ScenarioLibraries();
         this.rootPath = getFitnesseRootPath(propertyFileName);
         this.orangebeardClient = createOrangebeardClient(orangebeardProperties);
@@ -266,7 +270,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
         for (String suite : suites) {
             UUID parentSuiteId = runContext.getSuiteId(suitePath);
-            suitePath = String.format("%s.%s", suitePath, suite);
+            suitePath = format("%s.%s", suitePath, suite);
             suiteId = runContext.getSuiteId(suitePath);
             if (suiteId == null) {
                 String description = null;
