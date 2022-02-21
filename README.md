@@ -57,11 +57,14 @@ orangebeard.testset=<TESTSET_NAME>
 orangebeard.logLevel=INFO
 orangebeard.description=<DESCRIPTION>
 orangebeard.attributes=key:value; value;
+orangebeard.logsAtEndOfTest=false
 ```
 
 Be warned: the access token is a credential token. We advise you to store this token in a credential store, and pass it to the listener through environment properties. See below how to do that! 
 
 The log level is set to INFO by default. Valid values are: ```DEBUG```, ```INFO```, ```WARN``` and ```ERROR```. Logs of the set level and up to be logged. So if you were to set the log level to ```WARN```, only ```WARN``` and ```ERROR``` logs will be logged.  
+
+Set ```orangebeard.logsAtEndOfTest``` to ```true``` if you want the listener to stash the logs per test client side, and send them all at once once the test is finished. This will improve performance of the listener, but you will lose real time log information. It is recommended to set this value to true for very fast test runs, like api tests. 
 
 ### Environment properties
 Properties can also be set in the build, by passing them to the maven build. For example:

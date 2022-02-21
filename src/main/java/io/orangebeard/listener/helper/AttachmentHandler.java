@@ -25,6 +25,11 @@ public class AttachmentHandler {
         this.rootPath = rootPath;
     }
 
+    public boolean hasFilesToAttach(String message) {
+        Matcher attachments = attachmentPattern.matcher(message);
+        return attachments.find();
+    }
+
     public void attachFilesIfPresent(UUID testId, UUID testRunId, String message) {
         Matcher attachments = attachmentPattern.matcher(message);
         while (attachments.find()) {
