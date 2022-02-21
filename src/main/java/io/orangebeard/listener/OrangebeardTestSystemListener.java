@@ -142,17 +142,19 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         //Workaround for corner case where table contains binary representation with 0x00 unicode chars
         enrichedLog = enrichedLog.replace("\u0000", "");
 
-        Log logItem = Log.builder()
-                .message(enrichedLog)
-                .itemUuid(testId)
-                .testRunUUID(runContext.getTestRunUUID())
-                .logLevel(logLevel)
-                .time(LocalDateTime.now())
-                .build();
+        if (orangebeardProperties.logShouldBeDispatchedToOrangebeard(logLevel)) {
+            Log logItem = Log.builder()
+                    .message(enrichedLog)
+                    .itemUuid(testId)
+                    .testRunUUID(runContext.getTestRunUUID())
+                    .logLevel(logLevel)
+                    .time(LocalDateTime.now())
+                    .build();
 
-        orangebeardClient.log(logItem);
-        numberOfLogs++;
-        attachmentHandler.attachFilesIfPresent(testId, runContext.getTestRunUUID(), log);
+            orangebeardClient.log(logItem);
+            numberOfLogs++;
+            attachmentHandler.attachFilesIfPresent(testId, runContext.getTestRunUUID(), log);
+        }
     }
 
     @Override
@@ -185,25 +187,28 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private void logScenarioLibraries(UUID testUUID, List<WikiPage> scenarioLibraries) {
-        for (WikiPage scenarioLibrary : scenarioLibraries) {
-            String log = scenarioLibrary.getHtml();
+        if (orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)) {
 
-            log = OrangebeardTableLogParser.applyOrangebeardTableStyling(log);
-            String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
+            for (WikiPage scenarioLibrary : scenarioLibraries) {
+                String log = scenarioLibrary.getHtml();
 
-            //Workaround for corner case where table contains binary representation with 0x00 unicode chars
-            enrichedLog = enrichedLog.replace("\u0000", "");
+                log = OrangebeardTableLogParser.applyOrangebeardTableStyling(log);
+                String enrichedLog = OrangebeardTableLogParser.embedImagesAndStripHyperlinks(log, rootPath);
 
-            Log logItem = Log.builder()
-                    .message(enrichedLog)
-                    .itemUuid(testUUID)
-                    .testRunUUID(runContext.getTestRunUUID())
-                    .logLevel(LogLevel.debug)
-                    .time(LocalDateTime.now())
-                    .build();
+                //Workaround for corner case where table contains binary representation with 0x00 unicode chars
+                enrichedLog = enrichedLog.replace("\u0000", "");
 
-            orangebeardClient.log(logItem);
-            numberOfLogs++;
+                Log logItem = Log.builder()
+                        .message(enrichedLog)
+                        .itemUuid(testUUID)
+                        .testRunUUID(runContext.getTestRunUUID())
+                        .logLevel(LogLevel.debug)
+                        .time(LocalDateTime.now())
+                        .build();
+
+                orangebeardClient.log(logItem);
+                numberOfLogs++;
+            }
         }
     }
 
@@ -366,13 +371,11 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private OrangebeardClient createOrangebeardClient() {
-        orangebeardClient = new OrangebeardV2Client(
+        return new OrangebeardV2Client(
                 orangebeardProperties.getEndpoint(),
                 orangebeardProperties.getAccessToken(),
                 orangebeardProperties.getProjectName(),
                 orangebeardProperties.requiredValuesArePresent());
-
-        return orangebeardClient;
     }
 
     private boolean attachZip() {
