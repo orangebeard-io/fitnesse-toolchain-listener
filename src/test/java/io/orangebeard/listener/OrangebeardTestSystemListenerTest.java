@@ -144,7 +144,9 @@ public class OrangebeardTestSystemListenerTest {
 
     @Test
     public void when_a_table_is_logged_and_it_is_an_warn_loglevel_it_is_not_sent_to_orangebeard_when_this_should_not_be_the_case() {
-        orangebeardTestSystemListener.testOutputChunk(testPage, "<table class=\"warn\"></table>");
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.error)).thenReturn(false);
+
+        orangebeardTestSystemListener.testOutputChunk(testPage, "<table class=\"error\"></table>");
 
         verify(orangebeardClient, times(0)).log(any(Log.class));
     }

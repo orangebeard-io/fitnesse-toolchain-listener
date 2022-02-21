@@ -54,11 +54,14 @@ orangebeard.project=<PROJECT_NAME>
 orangebeard.testset=<TESTSET_NAME>
 
 # optional
+orangebeard.logLevel=INFO
 orangebeard.description=<DESCRIPTION>
 orangebeard.attributes=key:value; value;
 ```
 
 Be warned: the access token is a credential token. We advise you to store this token in a credential store, and pass it to the listener through environment properties. See below how to do that! 
+
+The log level is set to INFO by default. Valid values are: ```DEBUG```, ```INFO```, ```WARN``` and ```ERROR```. Logs of the set level and up to be logged. So if you were to set the log level to ```WARN```, only ```WARN``` and ```ERROR``` logs will be logged.  
 
 ### Environment properties
 Properties can also be set in the build, by passing them to the maven build. For example:
