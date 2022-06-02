@@ -42,6 +42,7 @@ import fitnesse.testsystems.TestSystemListener;
 import fitnesse.wiki.PageData;
 import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPageProperty;
+import io.orangebeard.listener.v3client.v3client;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -380,7 +381,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private static OrangebeardClient createOrangebeardClient(OrangebeardProperties orangebeardProperties) {
-        return new OrangebeardV2Client(
+        return new v3client(
                 orangebeardProperties.getEndpoint(),
                 orangebeardProperties.getAccessToken(),
                 orangebeardProperties.getProjectName(),
