@@ -3,9 +3,7 @@ name: release
 on:
   push:
     branches:
-      - 'master'
-    branches-ignore:
-      - '4072-toolchain-listener-alpha'
+      - 'toolchain-listener-v2-alpha'
 
 jobs:
   maven-release:
@@ -82,4 +80,4 @@ jobs:
           mvn -B release:update-versions -DautoVersionSubmodules=true
           git add pom.xml
           git commit -m "Update version"
-          git push origin master
+          git push origin toolchain-listener-v2-alpha
