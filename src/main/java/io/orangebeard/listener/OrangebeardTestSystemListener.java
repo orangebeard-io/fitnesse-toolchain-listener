@@ -1,17 +1,12 @@
 package io.orangebeard.listener;
 
-import io.orangebeard.client.OrangebeardClient;
+
 import io.orangebeard.client.OrangebeardProperties;
-import io.orangebeard.client.OrangebeardV2Client;
 //import io.orangebeard.client.entity.Attribute;
-import io.orangebeard.client.entity.FinishTestItem;
 import io.orangebeard.client.entity.FinishTestRun;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.LogLevel;
-import io.orangebeard.client.entity.StartTestItem;
 //import io.orangebeard.client.entity.StartTestRun;
-import io.orangebeard.client.entity.TestItemType;
-import io.orangebeard.datatypes.TestType;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.entity.Suite;
 import io.orangebeard.listener.helper.AttachmentHandler;
@@ -24,7 +19,6 @@ import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Array;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -48,12 +42,14 @@ import fitnesse.wiki.PageData;
 import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPageProperty;
 
+import io.orangebeard.listener.v3client.datatype.TestType;
 import io.orangebeard.listener.v3client.entities.Attribute;
 import io.orangebeard.listener.v3client.entities.FinishTest;
 import io.orangebeard.listener.v3client.entities.StartSuiteRQ;
 import io.orangebeard.listener.v3client.entities.StartTest;
 import io.orangebeard.listener.v3client.entities.StartTestRun;
 import io.orangebeard.listener.v3client.entities.TestStatus;
+
 import io.orangebeard.listener.v3client.v3Client;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;

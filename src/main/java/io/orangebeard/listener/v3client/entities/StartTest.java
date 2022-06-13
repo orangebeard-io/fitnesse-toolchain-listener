@@ -1,12 +1,14 @@
 package io.orangebeard.listener.v3client.entities;
 
-import io.orangebeard.datatypes.TestType;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import io.orangebeard.listener.v3client.datatype.TestType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;

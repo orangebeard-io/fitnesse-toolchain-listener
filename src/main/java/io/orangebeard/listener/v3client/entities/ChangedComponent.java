@@ -21,7 +21,7 @@ public class ChangedComponent {
     private String componentVersion;
 
     @JsonIgnore
-    public io.orangebeard.datatypes.ChangedComponent toDataType() {
-        return new io.orangebeard.datatypes.ChangedComponent(componentName, componentVersion);
+    public io.orangebeard.listener.v3client.datatype.ChangedComponent toDataType() {
+        return new io.orangebeard.listener.v3client.datatype.ChangedComponent(componentName, componentVersion);
     }
 }

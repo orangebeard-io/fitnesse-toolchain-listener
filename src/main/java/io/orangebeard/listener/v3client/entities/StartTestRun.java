@@ -38,7 +38,7 @@ public class StartTestRun {
     private final List<ChangedComponent> changedComponents;
 
     @JsonIgnore
-    public Set<io.orangebeard.datatypes.ChangedComponent> getChangedComponentDatatypes() {
+    public Set<io.orangebeard.listener.v3client.datatype.ChangedComponent> getChangedComponentDatatypes() {
         if (changedComponents == null || changedComponents.isEmpty()) {
             return null;
         }
@@ -50,14 +50,14 @@ public class StartTestRun {
     }
 
     @JsonIgnore
-    public Set<io.orangebeard.datatypes.Attribute> getAttributesDataTypes() {
+    public Set<io.orangebeard.listener.v3client.datatype.Attribute> getAttributesDataTypes() {
         if (attributes == null || attributes.isEmpty()) {
             return null;
         }
         return attributes
                 .stream()
                 .filter(Objects::nonNull)
-                .map(it -> new io.orangebeard.datatypes.Attribute(it.getKey(), it.getValue()))
+                .map(it -> new io.orangebeard.listener.v3client.datatype.Attribute(it.getKey(), it.getValue()))
                 .collect(Collectors.toSet());
     }
 }
