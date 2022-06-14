@@ -3,6 +3,7 @@ package io.orangebeard.listener;
 import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.entity.Log;
+import io.orangebeard.client.entity.LogFormat;
 import io.orangebeard.client.entity.LogLevel;
 import io.orangebeard.client.entity.StartTestRun;
 import io.orangebeard.listener.entity.ScenarioLibraries;
@@ -131,7 +132,7 @@ public class OrangebeardTestSystemListenerTest {
     }
 
     @Test
-    public void when_a_table_is_logged_and_it_is_an_error_loglevel_becomes_error() {
+    public void when_a_table_is_logged_and_it_is_an_error_loglevel_becomes_error_and_log_format_is_html() {
         when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.error)).thenReturn(true);
 
         orangebeardTestSystemListener.testOutputChunk(testPage, "<table class=\"error\"></table>");
@@ -140,6 +141,7 @@ public class OrangebeardTestSystemListenerTest {
         verify(orangebeardClient, times(1)).log(argumentCaptor.capture());
 
         assertThat(argumentCaptor.getValue().getLogLevel()).isEqualTo(LogLevel.error);
+        assertThat(argumentCaptor.getValue().getLogFormat()).isEqualTo(LogFormat.HTML);
     }
 
     @Test
@@ -161,6 +163,7 @@ public class OrangebeardTestSystemListenerTest {
         verify(orangebeardClient, times(1)).log(argumentCaptor.capture());
 
         assertThat(argumentCaptor.getValue().getMessage()).isEqualTo("<table style=\"background-color:#ffe67b; padding: 3px; border-radius: 3px;\"></table>");
+        assertThat(argumentCaptor.getValue().getLogFormat()).isEqualTo(LogFormat.HTML);
     }
 
     @Test
