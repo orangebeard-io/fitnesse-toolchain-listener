@@ -4,7 +4,7 @@ import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.LogLevel;
-import io.orangebeard.client.entity.StartTestRun;
+//import io.orangebeard.client.entity.StartTestRun;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.helper.AttachmentHandler;
 import io.orangebeard.listener.helper.LogStasher;
@@ -18,6 +18,10 @@ import fitnesse.testsystems.TestSummary;
 import fitnesse.testsystems.TestSystem;
 import fitnesse.wiki.PageData;
 import fitnesse.wiki.WikiPage;
+
+import io.orangebeard.listener.v3client.entities.StartTestRun;
+import io.orangebeard.listener.v3client.v3Client;
+
 import org.assertj.core.api.Assertions;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -49,7 +53,7 @@ public class OrangebeardTestSystemListenerTest {
     private ToolchainRunningContext runningContext;
 
     @Mock
-    private OrangebeardClient orangebeardClient;
+    private v3Client orangebeardClient;
 
     @Mock
     private AttachmentHandler orangebeardLogger;
@@ -82,7 +86,7 @@ public class OrangebeardTestSystemListenerTest {
         ArgumentCaptor<StartTestRun> argumentCaptor = ArgumentCaptor.forClass(StartTestRun.class);
         verify(orangebeardClient).startTestRun(argumentCaptor.capture());
 
-        assertThat(argumentCaptor.getValue().getName()).isEqualTo(testSetName);
+        assertThat(argumentCaptor.getValue().getTestSetName()).isEqualTo(testSetName);
         assertThat(argumentCaptor.getValue().getDescription()).isEqualTo(description);
         assertThat(argumentCaptor.getValue().getStartTime()).isNotNull();
     }
@@ -174,7 +178,7 @@ public class OrangebeardTestSystemListenerTest {
 
         orangebeardTestSystemListener.testStarted(testPage);
 
-        verify(orangebeardClient).startTestItem(eq(suiteUUID), any());
+        verify(orangebeardClient).startTestItem( any());
     }
 
     @Test
