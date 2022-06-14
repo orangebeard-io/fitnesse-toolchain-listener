@@ -11,17 +11,20 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import io.orangebeard.listener.v3client.v3Client;
+
 import net.lingala.zip4j.ZipFile;
 import org.slf4j.LoggerFactory;
 
 public class AttachmentHandler {
     private static final Pattern attachmentPattern = Pattern.compile("href=\"([^$<>\"]*)\"");
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(AttachmentHandler.class);
-    private final OrangebeardClient orangebeardClient;
+    private final v3Client v3client;
     private final String rootPath;
 
-    public AttachmentHandler(OrangebeardClient orangebeardClient, String rootPath) {
-        this.orangebeardClient = orangebeardClient;
+    public AttachmentHandler(v3Client v3client, String rootPath) {
+        this.v3client = v3client;
         this.rootPath = rootPath;
     }
 
@@ -48,7 +51,7 @@ public class AttachmentHandler {
                             .time(LocalDateTime.now())
                             .build();
 
-                    orangebeardClient.sendAttachment(attachment);
+                    v3client.sendAttachment(attachment);
                 } catch (IOException | InvalidPathException e) {
                     logger.info("Unable to read attachment file for: " + attachments.group(1));
                 }
@@ -72,7 +75,7 @@ public class AttachmentHandler {
                     .time(LocalDateTime.now())
                     .build();
 
-            orangebeardClient.sendAttachment(attachment);
+            v3client.sendAttachment(attachment);
         } catch (IOException e) {
             logger.warn("An exception occurred when attempting to attach the html report to the launch", e);
         }

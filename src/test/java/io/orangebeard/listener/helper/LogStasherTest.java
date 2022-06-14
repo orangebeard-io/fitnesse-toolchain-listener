@@ -1,8 +1,10 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.OrangebeardClient;
+//import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.LogLevel;
+
+import io.orangebeard.listener.v3client.v3Client;
 
 import java.util.Set;
 import java.util.UUID;
@@ -20,7 +22,7 @@ import static org.mockito.Mockito.verify;
 public class LogStasherTest {
 
     @Mock
-    private OrangebeardClient orangebeardClient;
+    private v3Client v3client;
 
     @InjectMocks
     private LogStasher logStasher;
@@ -35,7 +37,7 @@ public class LogStasherTest {
         logStasher.sendLogs(testId);
 
         ArgumentCaptor<Set<Log>> argumentCaptor = ArgumentCaptor.forClass(Set.class);
-        verify(orangebeardClient).log(argumentCaptor.capture());
+        verify(v3client).log(argumentCaptor.capture());
         assertThat(argumentCaptor.getValue()).hasSize(2);
     }
 }
