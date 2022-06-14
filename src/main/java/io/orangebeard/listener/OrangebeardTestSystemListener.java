@@ -5,7 +5,6 @@ import io.orangebeard.client.OrangebeardProperties;
 //import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.FinishTestRun;
 import io.orangebeard.client.entity.Log;
-import io.orangebeard.client.entity.LogFormat;
 import io.orangebeard.client.entity.LogLevel;
 //import io.orangebeard.client.entity.StartTestRun;
 import io.orangebeard.listener.entity.ScenarioLibraries;
@@ -170,7 +169,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                     .testRunUUID(runContext.getTestRunUUID())
                     .logLevel(logLevel)
                     .time(LocalDateTime.now())
-                    .logFormat(LogFormat.HTML)
                     .build();
             if (orangebeardProperties.isLogsAtEndOfTest() && !attachmentHandler.hasFilesToAttach(log)) {
                 logStasher.stashLogItem(testId, logItem);
@@ -234,7 +232,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                         .testRunUUID(runContext.getTestRunUUID())
                         .logLevel(LogLevel.debug)
                         .time(LocalDateTime.now())
-                        .logFormat(LogFormat.HTML)
                         .build();
 
                 v3client.log(logItem);
