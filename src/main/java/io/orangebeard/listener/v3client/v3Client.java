@@ -73,6 +73,7 @@ public class v3Client {
     public UUID startTestRun(StartTestRun testRun) {
         if (this.connectionWithOrangebeardIsValid) {
             try {
+                LOGGER.error("entered into v3 starttestrun");
                 HttpEntity<StartTestRun> request = new HttpEntity(testRun, this.getAuthorizationHeaders(this.uuid.toString()));
                 return ((Response)this.restTemplate.exchange(String.format("%s/listener/v3/%s/test-run/start", this.endpoint, this.projectName), HttpMethod.POST, request, Response.class, new Object[0]).getBody()).getId();
             } catch (Exception var3) {
