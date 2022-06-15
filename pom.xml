@@ -4,7 +4,7 @@
 
     <groupId>io.orangebeard</groupId>
     <artifactId>fitnesse-toolchain-listener</artifactId>
-    <version>2.2-ALPHA-SNAPSHOT</version>
+    <version>2.3-ALPHA-SNAPSHOT</version>
 
     <url>https://github.com/orangebeard-io/fitnesse-toolchain-listener</url>
     <name>Orangebeard.io FitNesse Toolchain Listener</name>
