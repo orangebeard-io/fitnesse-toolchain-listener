@@ -88,7 +88,7 @@ public class v3Client {
     public void startSuite( StartSuiteRQ suiteRQ) {
         if (this.connectionWithOrangebeardIsValid) {
             HttpEntity<FinishTestItem> request = new HttpEntity(suiteRQ, this.getAuthorizationHeaders(this.uuid.toString()));
-            this.restTemplate.exchange(String.format("%s/listener/v3/%s/suite", this.endpoint, this.projectName), HttpMethod.POST, request, Response.class, new Object[0]);
+            this.restTemplate.exchange(String.format("%s/listener/v3/%s/suite/start", this.endpoint, this.projectName), HttpMethod.POST, request, Response.class, new Object[0]);
         } else {
             LOGGER.warn("The connection with Orangebeard could not be established!");
         }

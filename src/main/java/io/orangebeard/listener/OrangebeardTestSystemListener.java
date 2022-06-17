@@ -61,6 +61,7 @@ import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
 import static io.orangebeard.listener.helper.TypeConverter.convertAttributes;
 import static io.orangebeard.listener.helper.TypeConverter.convertTestResultStatus;
 import static io.orangebeard.listener.helper.TypeConverter.determinePageType;
+import static io.orangebeard.listener.helper.TypeConverter.NewModeldeterminePageType;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
@@ -385,7 +386,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 .testRunUUID(runContext.getTestRunUUID())
                 .startTime(ZonedDateTime.now())
                 .testName(getTestName(testPage))
-                .testType(TestType.valueOf(determinePageType(testPage.getName()).toString()));
+                .testType(TestType.valueOf(NewModeldeterminePageType(testPage.getName()).toString()));
 
         if (testPage instanceof WikiTestPage) {
             PageData pageData = ((WikiTestPage) testPage).getData();
