@@ -1,12 +1,16 @@
 package io.orangebeard.listener;
 
 
+import com.sun.jna.platform.win32.COM.IRunningObjectTable;
+
 import io.orangebeard.client.OrangebeardProperties;
 //import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.FinishTestRun;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.LogLevel;
 //import io.orangebeard.client.entity.StartTestRun;
+import io.orangebeard.client.entity.StartTestItem;
+import io.orangebeard.client.entity.TestItemType;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.entity.Suite;
 import io.orangebeard.listener.helper.AttachmentHandler;
@@ -23,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -80,6 +85,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private final LogStasher logStasher;
     private v3Client v3client;
     private ToolchainRunningContext runContext;
+    private List<String> suites1;
 
     /**
      * constructor for testing purposes
@@ -190,7 +196,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     @Override
     public void testStarted(TestPage testPage) {
-         getAndOrStartSuite((WikiTestPage) testPage);
+        getAndOrStartSuite((WikiTestPage) testPage);
         StartTest testItem = getStartTestItem(testPage);
         UUID testId = v3client.startTestItem( testItem);
 
@@ -278,36 +284,46 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     public void close() {
     }
 
+
     private void getAndOrStartSuite(WikiTestPage testPage) {
-        String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
-        String[] suites = fullSuiteName.split("\\.");
-        String suitePath = "";
-        UUID suiteId = null;
+        try {
+            String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
+            String[] suites = fullSuiteName.split("\\.");
+            List<String> suitesToCreate = new ArrayList<>();
+            String suitePath = "";
+            String parentPath ="";
+            List<String> suitePath1 =new ArrayList<>();
+            UUID suiteId = null;
+            UUID parentSuiteId1 = null;
+            UUID parentSuiteId = runContext.getSuiteId(suitePath);
 
-        UUID parentSuiteId = runContext.getSuiteId(suitePath);
+            //Collections.reverse(Arrays.asList(suites));
+            for(String suite : suites) {
+                suitePath1.add(suite);
+                parentSuiteId = runContext.getSuiteId(String.join(".",suitePath1));
+                if(parentSuiteId != null) {
+                    parentSuiteId1=parentSuiteId;
+                }else {
+                    suitesToCreate.add(suite);
+                }
+            }
+            if (!suitesToCreate.isEmpty()) {
+                StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId1, new String(), new HashSet<>(), suitesToCreate);
+                List<io.orangebeard.listener.v3client.entities.Suite> suiteList = v3client.startSuite(suiteItem);
+                for (io.orangebeard.listener.v3client.entities.Suite s : suiteList) {
+                    if(s.getParentUUID() == null)
+                        runContext.addSuite(String.join(".", s.getFullSuitePath()), s.getSuiteUUID(), LocalDateTime.now());
+                    else {
+                        String parentSuitePath = runContext.getSuitePath(s.getParentUUID());
+                        runContext.addSuite(format("%s.%s",parentSuitePath,String.join(".", s.getLocalSuiteName())),s.getSuiteUUID(),LocalDateTime.now());
+                    }
+                }
+            }
 
-//        for (String suite : suites) {
-//             parentSuiteId = runContext.getSuiteId(suitePath);
-//            suitePath = format("%s.%s", suitePath, suite);
-//            suiteId = runContext.getSuiteId(suitePath);
-//            if (suiteId == null) {
-//                String description = null;
-//                Set<Attribute> suiteAttrs = null;
-//                PageData suitePageData = getPageDataForSuite(suitePath, testPage.getSourcePage());
-//                if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
-//                    suiteAttrs = convertAttributes(suitePageData.getAttribute(WikiPageProperty.SUITES));
-//                }
-//                if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.HELP) != null) {
-//                    description = suitePageData.getAttribute(WikiPageProperty.HELP);
-//                }
-//
-//                StartTestItem suiteItem = new StartTestItem(runContext.getTestRunUUID(), suite, TestItemType.SUITE, description, suiteAttrs);
-//               // suiteId = orangebeardClient.startTestItem(parentSuiteId, suiteItem);
-//                runContext.addSuite(suitePath, suiteId, suiteItem.getStartTime());
-//            }
-//        }
-        StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId, new String(), new HashSet<Attribute>(), Arrays.asList(suites));
-        v3client.startSuite(suiteItem);
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -375,18 +391,14 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private StartTest getStartTestItem(TestPage testPage) {
-       //StartTestItem.StartTestItemBuilder testItem = StartTestItem.builder()
-//                .testRunUUID(runContext.getTestRunUUID())
-//                .startTime(LocalDateTime.now())
-//                .name(getTestName(testPage))
-//                .type(determinePageType(testPage.getName()));
-
+         String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
 
         StartTest.StartTestBuilder testItem = StartTest.builder()
                 .testRunUUID(runContext.getTestRunUUID())
                 .startTime(ZonedDateTime.now())
                 .testName(getTestName(testPage))
-                .testType(TestType.valueOf(NewModeldeterminePageType(testPage.getName()).toString()));
+                .testType(TestType.valueOf(NewModeldeterminePageType(testPage.getName()).toString()))
+                .suiteUUID(runContext.getSuiteId(fullSuiteName));
 
         if (testPage instanceof WikiTestPage) {
             PageData pageData = ((WikiTestPage) testPage).getData();
