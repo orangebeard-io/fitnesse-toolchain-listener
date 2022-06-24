@@ -6,7 +6,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import java.util.UUID;
+
 
 /**
  * Parallel execution context and set of operations to interact with it
@@ -50,6 +53,15 @@ public class ToolchainRunningContext {
         return null;
     }
 
+    public String getSuitePath(UUID suiteUUID) {
+        for (Map.Entry<String, Suite> entry : suites.entrySet()) {
+            if (entry.getValue().getUuid().equals(suiteUUID)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+
+    }
     public void addSuite(String fullSuiteName, UUID suiteId, LocalDateTime startTime) {
         suites.put(fullSuiteName, new Suite(suiteId, startTime));
     }
@@ -60,6 +72,10 @@ public class ToolchainRunningContext {
 
     public List<Suite> getAllSuites() {
         return new ArrayList<>(suites.values());
+    }
+
+    public List<UUID> getAllTests() {
+        return new ArrayList<>(tests.values());
     }
 }
 

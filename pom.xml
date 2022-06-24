@@ -4,7 +4,7 @@
 
     <groupId>io.orangebeard</groupId>
     <artifactId>fitnesse-toolchain-listener</artifactId>
-    <version>2.4-ALPHA-SNAPSHOT</version>
+    <version>2.4.0-ALPHA-SNAPSHOT</version>
 
     <url>https://github.com/orangebeard-io/fitnesse-toolchain-listener</url>
     <name>Orangebeard.io FitNesse Toolchain Listener</name>
@@ -38,7 +38,7 @@
         <!--dependency versions-->
         <fitnesse.version>20211030</fitnesse.version>
         <hsac.version>5.0.0</hsac.version>
-        <java.client.version>1.2.5</java.client.version>
+        <java.client.version>1.2.6</java.client.version>
     </properties>
 
     <dependencies>
@@ -332,5 +332,4 @@
             </comments>
         </license>
     </licenses>
-
 </project>
