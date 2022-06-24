@@ -5,7 +5,7 @@ import com.sun.jna.platform.win32.COM.IRunningObjectTable;
 
 import io.orangebeard.client.OrangebeardProperties;
 //import io.orangebeard.client.entity.Attribute;
-import io.orangebeard.client.entity.FinishTestRun;
+//import io.orangebeard.client.entity.FinishTestRun;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.LogLevel;
 //import io.orangebeard.client.entity.StartTestRun;
@@ -50,6 +50,7 @@ import fitnesse.wiki.WikiPageProperty;
 import io.orangebeard.listener.v3client.datatype.TestType;
 import io.orangebeard.listener.v3client.entities.Attribute;
 import io.orangebeard.listener.v3client.entities.FinishTest;
+import io.orangebeard.listener.v3client.entities.FinishTestRun;
 import io.orangebeard.listener.v3client.entities.StartSuiteRQ;
 import io.orangebeard.listener.v3client.entities.StartTest;
 import io.orangebeard.listener.v3client.entities.StartTestRun;
@@ -259,7 +260,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         logger.info("Number of log requests: {}", numberOfLogRequests);
         numberOfLogRequests = 0;
         stopAllSuites();
-        v3client.finishTestRun(runContext.getTestRunUUID(), new FinishTestRun());
+        v3client.finishTestRun(runContext.getTestRunUUID(), new FinishTestRun(ZonedDateTime.now()));
         reset();
     }
 
@@ -308,7 +309,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 }
             }
             if (!suitesToCreate.isEmpty()) {
-                StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId1, new String(), new HashSet<>(), suitesToCreate);
+                StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId1, new String("this is description"), new HashSet<>(), suitesToCreate);
                 List<io.orangebeard.listener.v3client.entities.Suite> suiteList = v3client.startSuite(suiteItem);
                 for (io.orangebeard.listener.v3client.entities.Suite s : suiteList) {
                     if(s.getParentUUID() == null)

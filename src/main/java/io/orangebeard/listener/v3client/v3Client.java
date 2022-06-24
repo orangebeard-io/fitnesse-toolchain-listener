@@ -2,12 +2,13 @@ package io.orangebeard.listener.v3client;
 import io.orangebeard.client.OrangebeardV2Client;
 import io.orangebeard.client.entity.Attachment;
 import io.orangebeard.client.entity.FinishTestItem;
-import io.orangebeard.client.entity.FinishTestRun;
+//import io.orangebeard.client.entity.FinishTestRun;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.Response;
 import io.orangebeard.client.entity.StartTestItem;
 
 import io.orangebeard.listener.v3client.entities.FinishTest;
+import io.orangebeard.listener.v3client.entities.FinishTestRun;
 import io.orangebeard.listener.v3client.entities.StartSuiteRQ;
 
 import io.orangebeard.listener.v3client.entities.StartTest;
