@@ -1,18 +1,11 @@
 package io.orangebeard.listener;
 
 
-import com.sun.jna.platform.win32.COM.IRunningObjectTable;
-
 import io.orangebeard.client.OrangebeardProperties;
-//import io.orangebeard.client.entity.Attribute;
-//import io.orangebeard.client.entity.FinishTestRun;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.LogLevel;
-//import io.orangebeard.client.entity.StartTestRun;
-import io.orangebeard.client.entity.StartTestItem;
-import io.orangebeard.client.entity.TestItemType;
 import io.orangebeard.listener.entity.ScenarioLibraries;
-import io.orangebeard.listener.entity.Suite;
+
 import io.orangebeard.listener.helper.AttachmentHandler;
 import io.orangebeard.listener.helper.LogStasher;
 import io.orangebeard.listener.helper.OrangebeardTableLogParser;
@@ -26,9 +19,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -54,6 +44,7 @@ import io.orangebeard.listener.v3client.entities.FinishTestRun;
 import io.orangebeard.listener.v3client.entities.StartSuiteRQ;
 import io.orangebeard.listener.v3client.entities.StartTest;
 import io.orangebeard.listener.v3client.entities.StartTestRun;
+import io.orangebeard.listener.v3client.entities.Suite;
 import io.orangebeard.listener.v3client.entities.TestStatus;
 
 import io.orangebeard.listener.v3client.v3Client;
@@ -64,10 +55,10 @@ import org.slf4j.LoggerFactory;
 import static fitnesse.testsystems.ExecutionResult.getExecutionResult;
 import static io.orangebeard.listener.helper.TestPageHelper.getRelativeName;
 import static io.orangebeard.listener.helper.TestPageHelper.getTestName;
+import static io.orangebeard.listener.helper.TypeConverter.NewUIdeterminePageType;
 import static io.orangebeard.listener.helper.TypeConverter.convertAttributes;
 import static io.orangebeard.listener.helper.TypeConverter.convertTestResultStatus;
-import static io.orangebeard.listener.helper.TypeConverter.determinePageType;
-import static io.orangebeard.listener.helper.TypeConverter.NewModeldeterminePageType;
+
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
@@ -144,12 +135,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     public void testSystemStarted(TestSystem testSystem) {
         orangebeardProperties.checkPropertiesArePresent();
 
-//        StartTestRun testRun = new StartTestRun(
-//                orangebeardProperties.getTestSetName(),
-//                orangebeardProperties.getDescription(),
-//                getTestRunAttributes(testSystem.getName()),
-//                ChangedComponentsHelper.getChangedComponents());
-
         StartTestRun testRun = StartTestRun.builder().testSetName( orangebeardProperties.getTestSetName())
                 .description(orangebeardProperties.getDescription())
                 .attributes(getTestRunAttributes(testSystem.getName()))
@@ -168,6 +153,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         if (scenarioLibraries.contains(log)) {
             return;
         }
+
         String logMessage = OrangebeardTableLogParser.parseLogMessage(log, rootPath);
         LogLevel logLevel = getLogLevel(log);
         if (orangebeardProperties.logShouldBeDispatchedToOrangebeard(logLevel)) {
@@ -212,7 +198,11 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         UUID testId = runContext.getTestId(testName);
         ExecutionResult result = getExecutionResult(getRelativeName(testPage), testSummary);
         if (runContext.hasTest(testName)) {
-            FinishTest finishedTestItem = new FinishTest(runContext.getTestRunUUID(), TestStatus.valueOf(convertTestResultStatus(result).toString()),ZonedDateTime.now());
+
+            FinishTest finishedTestItem = new FinishTest(runContext.getTestRunUUID(),
+                    TestStatus.valueOf(convertTestResultStatus(result).toString()),
+                    ZonedDateTime.now());
+
             if (orangebeardProperties.isLogsAtEndOfTest()) {
                 logStasher.sendLogs(testId);
                 numberOfLogRequests++;
@@ -287,45 +277,32 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
 
     private void getAndOrStartSuite(WikiTestPage testPage) {
-        try {
-            String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
-            String[] suites = fullSuiteName.split("\\.");
-            List<String> suitesToCreate = new ArrayList<>();
-            String suitePath = "";
-            String parentPath ="";
-            List<String> suitePath1 =new ArrayList<>();
-            UUID suiteId = null;
-            UUID parentSuiteId1 = null;
-            UUID parentSuiteId = runContext.getSuiteId(suitePath);
+        String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
+        String[] suites = fullSuiteName.split("\\.");
+        List<String> suitesToCreate = new ArrayList<>();
+        List<String> suitePath =new ArrayList<>();
+        UUID parentSuiteId = null;
 
-            //Collections.reverse(Arrays.asList(suites));
-            for(String suite : suites) {
-                suitePath1.add(suite);
-                parentSuiteId = runContext.getSuiteId(String.join(".",suitePath1));
-                if(parentSuiteId != null) {
-                    parentSuiteId1=parentSuiteId;
-                }else {
-                    suitesToCreate.add(suite);
-                }
+        for(String suite : suites) {
+            suitePath.add(suite);
+            parentSuiteId = runContext.getSuiteId(String.join(".",suitePath));
+            if(parentSuiteId == null) {
+                suitesToCreate.add(suite);
             }
-            if (!suitesToCreate.isEmpty()) {
-                StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId1, new String("this is description"), new HashSet<>(), suitesToCreate);
-                List<io.orangebeard.listener.v3client.entities.Suite> suiteList = v3client.startSuite(suiteItem);
-                for (io.orangebeard.listener.v3client.entities.Suite s : suiteList) {
-                    if(s.getParentUUID() == null)
-                        runContext.addSuite(String.join(".", s.getFullSuitePath()), s.getSuiteUUID(), LocalDateTime.now());
-                    else {
-                        String parentSuitePath = runContext.getSuitePath(s.getParentUUID());
-                        runContext.addSuite(format("%s.%s",parentSuitePath,String.join(".", s.getLocalSuiteName())),s.getSuiteUUID(),LocalDateTime.now());
-                    }
-                }
-            }
-
-        }
-        catch(Exception e) {
-            e.printStackTrace();
         }
 
+        if (!suitesToCreate.isEmpty()) {
+            StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId, new String("this is description"), new HashSet<Attribute>(), suitesToCreate); //description made min=1 in listenerapi
+            List<Suite> suiteList = v3client.startSuite(suiteItem);
+            for (Suite suite : suiteList) {
+                if(suite.getParentUUID() == null)
+                    runContext.addSuite(String.join(".", suite.getFullSuitePath()), suite.getSuiteUUID(), LocalDateTime.now()); //suite starttime is not coming from listener api
+                else {
+                    String parentSuitePath = runContext.getSuitePath(suite.getParentUUID());
+                    runContext.addSuite(format("%s.%s",parentSuitePath,String.join(".", suite.getLocalSuiteName())),suite.getSuiteUUID(),LocalDateTime.now());
+                }
+            }
+        }
     }
 
     /**
@@ -359,7 +336,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private void stopTest(UUID suiteId) {
-        FinishTest item = new FinishTest(runContext.getTestRunUUID(), null, null);
+        FinishTest item = new FinishTest(runContext.getTestRunUUID(), null, ZonedDateTime.now());
         v3client.finishTestItem(suiteId, item);
     }
 
@@ -398,7 +375,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 .testRunUUID(runContext.getTestRunUUID())
                 .startTime(ZonedDateTime.now())
                 .testName(getTestName(testPage))
-                .testType(TestType.valueOf(NewModeldeterminePageType(testPage.getName()).toString()))
+                .testType(TestType.valueOf(NewUIdeterminePageType(testPage.getName()).toString()))
                 .suiteUUID(runContext.getSuiteId(fullSuiteName));
 
         if (testPage instanceof WikiTestPage) {

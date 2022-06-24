@@ -43,7 +43,7 @@ public class TypeConverter {
                 return TestItemType.STEP;
         }
     }
-    public static TestType NewModeldeterminePageType(String pageName) {
+    public static TestType NewUIdeterminePageType(String pageName) {
         switch (pageName) {
             case "SuiteSetUp":
                 return TestType.BEFORE;

@@ -2,7 +2,6 @@ package io.orangebeard.listener.v3client;
 import io.orangebeard.client.OrangebeardV2Client;
 import io.orangebeard.client.entity.Attachment;
 import io.orangebeard.client.entity.FinishTestItem;
-//import io.orangebeard.client.entity.FinishTestRun;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.Response;
 import io.orangebeard.client.entity.StartTestItem;
@@ -78,21 +77,29 @@ public class v3Client {
         if (this.connectionWithOrangebeardIsValid) {
             try {
                 HttpEntity<StartTestRun> request = new HttpEntity(testRun, this.getAuthorizationHeaders(this.uuid.toString()));
-                return this.restTemplate.exchange(String.format("%s/listener/v3/%s/test-run/start", this.endpoint, this.projectName), HttpMethod.POST, request, TestRunUUID.class).getBody().getTestRunUUID();
+                return this.restTemplate.exchange(
+                        String.format("%s/listener/v3/%s/test-run/start", this.endpoint, this.projectName),
+                        HttpMethod.POST,
+                        request,
+                        TestRunUUID.class).getBody().getTestRunUUID();
 
             } catch (Exception var3) {
                 LOGGER.error("The connection with Orangebeard could not be established! Check the properties and try again!");
                 this.connectionWithOrangebeardIsValid = false;
             }
         }
-
         return null;
     }
 
     public List<Suite> startSuite(StartSuiteRQ suiteRQ) {
         if (this.connectionWithOrangebeardIsValid) {
             HttpEntity<FinishTestItem> request = new HttpEntity(suiteRQ, this.getAuthorizationHeaders(this.uuid.toString()));
-            ResponseEntity<Suite[]> suite = this.restTemplate.exchange(String.format("%s/listener/v3/%s/suite/start", this.endpoint, this.projectName), HttpMethod.POST, request,  Suite[].class);
+            ResponseEntity<Suite[]> suite = this.restTemplate.exchange(
+                    String.format("%s/listener/v3/%s/suite/start", this.endpoint, this.projectName),
+                    HttpMethod.POST,
+                    request,
+                    Suite[].class);
+
             return Arrays.asList(suite.getBody());
         } else {
             LOGGER.warn("The connection with Orangebeard could not be established!");
@@ -100,11 +107,14 @@ public class v3Client {
         }
     }
 
-
     public UUID startTestItem(StartTest testItem) {
         if (this.connectionWithOrangebeardIsValid) {
             HttpEntity<StartTestItem> request = new HttpEntity(testItem, this.getAuthorizationHeaders(this.uuid.toString()));
-            return  this.restTemplate.exchange(String.format("%s/listener/v3/%s/test/start", this.endpoint, this.projectName), HttpMethod.POST, request, TestUUID.class).getBody().getGetTestUUID();
+            return  this.restTemplate.exchange(
+                    String.format("%s/listener/v3/%s/test/start", this.endpoint, this.projectName),
+                    HttpMethod.POST,
+                    request,
+                    TestUUID.class).getBody().getGetTestUUID();
         } else {
             LOGGER.warn("The connection with Orangebeard could not be established!");
             return null;
@@ -114,7 +124,11 @@ public class v3Client {
     public void finishTestItem(UUID testUUId, FinishTest finishTest) {
         if (this.connectionWithOrangebeardIsValid) {
             HttpEntity<FinishTestItem> request = new HttpEntity(finishTest, this.getAuthorizationHeaders(this.uuid.toString()));
-            this.restTemplate.exchange(String.format("%s/listener/v3/%s/test/finish/%s", this.endpoint, this.projectName, testUUId), HttpMethod.PUT, request, Response.class, new Object[0]);
+            this.restTemplate.exchange(
+                    String.format("%s/listener/v3/%s/test/finish/%s", this.endpoint, this.projectName, testUUId),
+                    HttpMethod.PUT,
+                    request,
+                    Void.class);
         } else {
             LOGGER.warn("The connection with Orangebeard could not be established!");
         }
@@ -124,7 +138,11 @@ public class v3Client {
     public void finishTestRun(UUID testRunUUID, FinishTestRun finishTestRun) {
         if (this.connectionWithOrangebeardIsValid) {
             HttpEntity<FinishTestRun> request = new HttpEntity(finishTestRun, this.getAuthorizationHeaders(this.uuid.toString()));
-            this.restTemplate.exchange(String.format("%s/listener/v3/%s/test-run/finish/%s", this.endpoint, this.projectName, testRunUUID), HttpMethod.PUT, request, Response.class, new Object[0]);
+            this.restTemplate.exchange(
+                    String.format("%s/listener/v3/%s/test-run/finish/%s", this.endpoint, this.projectName, testRunUUID),
+                    HttpMethod.PUT,
+                    request,
+                    Void.class);
         } else {
             LOGGER.warn("The connection with Orangebeard could not be established!");
         }
@@ -134,7 +152,6 @@ public class v3Client {
     public void log(Log log) {
         this.log(Collections.singleton(log));
     }
-
 
     public void log(Set<Log> logs) {
         LOGGER.warn("Log api for v3client not defined yet");
