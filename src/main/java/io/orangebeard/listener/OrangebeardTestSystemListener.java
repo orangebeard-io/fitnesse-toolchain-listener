@@ -259,7 +259,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     public void testSystemStopped(TestSystem testSystem, Throwable throwable) {
         logger.info("Number of log requests: {}", numberOfLogRequests);
         numberOfLogRequests = 0;
-        stopAllSuites();
+        stopAllTests();
         v3client.finishTestRun(runContext.getTestRunUUID(), new FinishTestRun(ZonedDateTime.now()));
         reset();
     }
@@ -348,17 +348,17 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
     }
 
-    private void stopAllSuites() {
-        List<Suite> suites = runContext.getAllSuites();
+    private void stopAllTests() {
+        List<UUID> tests = runContext.getAllTests();
         // reverse suite ids so suites are stopped in the reverse order of which these are started.
-        suites.sort(Comparator.comparing(Suite::getStartTime).reversed());
+        //tests.sort(Comparator.comparing(Suite::getStartTime).reversed());
 
-        for (Suite suite : suites) {
-            stopSuite(suite.getUuid());
+        for (UUID testUUID : tests) {
+            stopTest(testUUID);
         }
     }
 
-    private void stopSuite(UUID suiteId) {
+    private void stopTest(UUID suiteId) {
         FinishTest item = new FinishTest(runContext.getTestRunUUID(), null, null);
         v3client.finishTestItem(suiteId, item);
     }

@@ -73,5 +73,9 @@ public class ToolchainRunningContext {
     public List<Suite> getAllSuites() {
         return new ArrayList<>(suites.values());
     }
+
+    public List<UUID> getAllTests() {
+        return new ArrayList<>(tests.values());
+    }
 }
 
