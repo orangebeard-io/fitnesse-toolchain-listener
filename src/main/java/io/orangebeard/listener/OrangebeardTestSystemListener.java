@@ -379,6 +379,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 .startTime(ZonedDateTime.now())
                 .testName(getTestName(testPage))
                 .testType(TestType.valueOf(NewUIdeterminePageType(testPage.getName()).toString()))
+                .description(" ")
                 .suiteUUID(runContext.getSuiteId(fullSuiteName));
 
         if (testPage instanceof WikiTestPage) {
