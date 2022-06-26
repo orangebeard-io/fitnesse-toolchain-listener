@@ -282,11 +282,14 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         List<String> suitesToCreate = new ArrayList<>();
         List<String> suitePath =new ArrayList<>();
         UUID parentSuiteId = null;
+        UUID suiteId = null;
 
         for(String suite : suites) {
             suitePath.add(suite);
-            parentSuiteId = runContext.getSuiteId(String.join(".",suitePath));
-            if(parentSuiteId == null) {
+            suiteId = runContext.getSuiteId(String.join(".",suitePath));
+            if(suiteId != null) {
+                parentSuiteId=suiteId;
+            }else {
                 suitesToCreate.add(suite);
             }
         }
