@@ -295,7 +295,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
 
         if (!suitesToCreate.isEmpty()) {
-            StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId, new String("this is description"), new HashSet<Attribute>(), suitesToCreate); //description made min=1 in listenerapi
+            StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId, null, new HashSet<Attribute>(), suitesToCreate); //description made min=1 in listenerapi
             List<Suite> suiteList = v3client.startSuite(suiteItem);
             for (Suite suite : suiteList) {
                 if(suite.getParentUUID() == null)
@@ -379,7 +379,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 .startTime(ZonedDateTime.now())
                 .testName(getTestName(testPage))
                 .testType(TestType.valueOf(NewUIdeterminePageType(testPage.getName()).toString()))
-                .description(" ")
                 .suiteUUID(runContext.getSuiteId(fullSuiteName));
 
         if (testPage instanceof WikiTestPage) {

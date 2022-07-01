@@ -154,11 +154,11 @@ public class v3Client {
     }
 
     public void log(Set<Log> logs) {
-        LOGGER.warn("Log api for v3client not defined yet");
+
     }
 
     public void sendAttachment(Attachment attachment) {
-        LOGGER.warn(" sendAttachemnt api for v3client not defined yet");
+
     }
 }
 
