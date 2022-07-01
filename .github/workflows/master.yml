@@ -5,7 +5,7 @@ on:
     branches:
       - 'master'
     branches-ignore:
-      - '4072-toolchain-listener-alpha'
+      - '4072-toolchain-listener-alpha-master'
 
 jobs:
   maven-release:
