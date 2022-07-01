@@ -3,7 +3,7 @@ name: release
 on:
   push:
     branches:
-      - 'toolchain-listener-v2-alpha'
+      - 'toolchain-listener-v2-alpha-master'
 
 jobs:
   maven-release:
