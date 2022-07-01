@@ -1,7 +1,5 @@
 package io.orangebeard.listener;
 
-//import io.orangebeard.client.entity.ChangedComponent;
-
 import java.util.Arrays;
 import java.util.Set;
 

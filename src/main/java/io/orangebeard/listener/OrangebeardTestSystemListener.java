@@ -3,6 +3,7 @@ package io.orangebeard.listener;
 
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.entity.Log;
+import io.orangebeard.client.entity.LogFormat;
 import io.orangebeard.client.entity.LogLevel;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 
@@ -163,6 +164,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                     .testRunUUID(runContext.getTestRunUUID())
                     .logLevel(logLevel)
                     .time(LocalDateTime.now())
+                    .logFormat(LogFormat.HTML)
                     .build();
             if (orangebeardProperties.isLogsAtEndOfTest() && !attachmentHandler.hasFilesToAttach(log)) {
                 logStasher.stashLogItem(testId, logItem);
@@ -230,6 +232,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                         .testRunUUID(runContext.getTestRunUUID())
                         .logLevel(LogLevel.debug)
                         .time(LocalDateTime.now())
+                        .logFormat(LogFormat.HTML)
                         .build();
 
                 v3client.log(logItem);
@@ -330,8 +333,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private void stopAllTests() {
         List<UUID> tests = runContext.getAllTests();
-        // reverse suite ids so suites are stopped in the reverse order of which these are started.
-        //tests.sort(Comparator.comparing(Suite::getStartTime).reversed());
 
         for (UUID testUUID : tests) {
             stopTest(testUUID);
