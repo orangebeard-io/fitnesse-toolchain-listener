@@ -1,4 +1,4 @@
-package io.orangebeard.listener.v3client.entities;
+package io.orangebeard.listener.orangebeardv3client.entities;
 
 
 import javax.validation.constraints.NotNull;

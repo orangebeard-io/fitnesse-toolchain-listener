@@ -3,7 +3,7 @@ package io.orangebeard.listener;
 import java.util.Arrays;
 import java.util.Set;
 
-import io.orangebeard.listener.v3client.entities.ChangedComponent;
+import io.orangebeard.listener.orangebeardv3client.entities.ChangedComponent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

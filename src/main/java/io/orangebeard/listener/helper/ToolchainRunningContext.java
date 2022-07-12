@@ -19,6 +19,7 @@ public class ToolchainRunningContext {
     private final UUID testRun;
     private final HashMap<String, UUID> tests = new HashMap<>();
     private final HashMap<String, Suite> suites = new HashMap<>();
+    private final HashMap<UUID, String> suitePath = new HashMap<>();
     private String latestTest;
 
     public ToolchainRunningContext(UUID testRunId) {
@@ -54,24 +55,19 @@ public class ToolchainRunningContext {
     }
 
     public String getSuitePath(UUID suiteUUID) {
-        for (Map.Entry<String, Suite> entry : suites.entrySet()) {
-            if (entry.getValue().getUuid().equals(suiteUUID)) {
-                return entry.getKey();
-            }
-        }
-        return null;
-
+       return suitePath.get(suiteUUID);
     }
+
     public void addSuite(String fullSuiteName, UUID suiteId, LocalDateTime startTime) {
         suites.put(fullSuiteName, new Suite(suiteId, startTime));
     }
+    public void addSuitePath( UUID suiteId,String fullSuiteName) {
+        suitePath.put(suiteId,fullSuiteName);
+    }
+
 
     public String getLatestTestName() {
         return latestTest;
-    }
-
-    public List<Suite> getAllSuites() {
-        return new ArrayList<>(suites.values());
     }
 
     public List<UUID> getAllTests() {

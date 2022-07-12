@@ -1,13 +1,11 @@
-package io.orangebeard.listener.v3client.entities;
+package io.orangebeard.listener.orangebeardv3client.entities;
 
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-
-import io.orangebeard.listener.v3client.datatype.TestType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,7 +31,7 @@ public class StartTest {
     private TestType testType;
     @Size(min = 1)
     private String description;
-    private List<Attribute> attributes;
+    private Set<Attribute> attributes;
     @NotNull
     private ZonedDateTime startTime;
 }

@@ -1,4 +1,4 @@
-package io.orangebeard.listener.v3client.entities;
+package io.orangebeard.listener.orangebeardv3client.entities;
 
 import java.util.List;
 import java.util.UUID;

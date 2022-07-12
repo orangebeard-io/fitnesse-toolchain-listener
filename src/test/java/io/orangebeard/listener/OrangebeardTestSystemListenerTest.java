@@ -1,11 +1,9 @@
 package io.orangebeard.listener;
 
-import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.entity.Log;
 import io.orangebeard.client.entity.LogFormat;
 import io.orangebeard.client.entity.LogLevel;
-//import io.orangebeard.client.entity.StartTestRun;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.helper.AttachmentHandler;
 import io.orangebeard.listener.helper.LogStasher;
@@ -20,8 +18,8 @@ import fitnesse.testsystems.TestSystem;
 import fitnesse.wiki.PageData;
 import fitnesse.wiki.WikiPage;
 
-import io.orangebeard.listener.v3client.entities.StartTestRun;
-import io.orangebeard.listener.v3client.v3Client;
+import io.orangebeard.listener.orangebeardv3client.entities.StartTestRun;
+import io.orangebeard.listener.orangebeardv3client.OrangebeardV3Client;
 
 import org.assertj.core.api.Assertions;
 import org.mockito.ArgumentCaptor;
@@ -54,7 +52,7 @@ public class OrangebeardTestSystemListenerTest {
     private ToolchainRunningContext runningContext;
 
     @Mock
-    private v3Client orangebeardClient;
+    private OrangebeardV3Client orangebeardClient;
 
     @Mock
     private AttachmentHandler orangebeardLogger;

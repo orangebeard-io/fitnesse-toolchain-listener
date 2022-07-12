@@ -1,6 +1,5 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.entity.Attachment;
 import io.orangebeard.client.entity.LogLevel;
 
@@ -12,7 +11,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.orangebeard.listener.v3client.v3Client;
+import io.orangebeard.listener.orangebeardv3client.OrangebeardV3Client;
 
 import net.lingala.zip4j.ZipFile;
 import org.slf4j.LoggerFactory;
@@ -20,11 +19,11 @@ import org.slf4j.LoggerFactory;
 public class AttachmentHandler {
     private static final Pattern attachmentPattern = Pattern.compile("href=\"([^$<>\"]*)\"");
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(AttachmentHandler.class);
-    private final v3Client v3client;
+    private final OrangebeardV3Client orangebeardV3Client;
     private final String rootPath;
 
-    public AttachmentHandler(v3Client v3client, String rootPath) {
-        this.v3client = v3client;
+    public AttachmentHandler(OrangebeardV3Client orangebeardV3Client, String rootPath) {
+        this.orangebeardV3Client = orangebeardV3Client;
         this.rootPath = rootPath;
     }
 
@@ -51,7 +50,7 @@ public class AttachmentHandler {
                             .time(LocalDateTime.now())
                             .build();
 
-                    v3client.sendAttachment(attachment);
+                    orangebeardV3Client.sendAttachment(attachment);
                 } catch (IOException | InvalidPathException e) {
                     logger.info("Unable to read attachment file for: " + attachments.group(1));
                 }
@@ -75,7 +74,7 @@ public class AttachmentHandler {
                     .time(LocalDateTime.now())
                     .build();
 
-            v3client.sendAttachment(attachment);
+            orangebeardV3Client.sendAttachment(attachment);
         } catch (IOException e) {
             logger.warn("An exception occurred when attempting to attach the html report to the launch", e);
         }

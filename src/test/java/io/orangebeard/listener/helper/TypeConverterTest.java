@@ -1,11 +1,10 @@
 package io.orangebeard.listener.helper;
 
-//import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.TestItemType;
 
 import java.util.Set;
 
-import io.orangebeard.listener.v3client.entities.Attribute;
+import io.orangebeard.listener.orangebeardv3client.entities.Attribute;
 
 import org.junit.Test;
 

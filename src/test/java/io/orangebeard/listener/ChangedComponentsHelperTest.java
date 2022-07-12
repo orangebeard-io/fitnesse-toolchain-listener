@@ -1,11 +1,10 @@
 package io.orangebeard.listener;
 
-//import io.orangebeard.client.entity.ChangedComponent;
 
 import java.util.ArrayList;
 import java.util.Set;
 
-import io.orangebeard.listener.v3client.entities.ChangedComponent;
+import io.orangebeard.listener.orangebeardv3client.entities.ChangedComponent;
 
 import org.junit.Test;
 
