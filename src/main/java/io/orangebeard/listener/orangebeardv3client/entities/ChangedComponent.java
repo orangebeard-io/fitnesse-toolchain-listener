@@ -1,6 +1,5 @@
 package io.orangebeard.listener.orangebeardv3client.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

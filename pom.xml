@@ -4,7 +4,7 @@
 
     <groupId>io.orangebeard</groupId>
     <artifactId>fitnesse-toolchain-listener</artifactId>
-    <version>2.4.0-ALPHA-SNAPSHOT</version>
+    <version>2.5.0-ALPHA-SNAPSHOT</version>
 
     <url>https://github.com/orangebeard-io/fitnesse-toolchain-listener</url>
     <name>Orangebeard.io FitNesse Toolchain Listener</name>
@@ -146,11 +146,6 @@
             <artifactId>system-lambda</artifactId>
             <version>1.1.1</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>2.0.1.Final</version>
         </dependency>
     </dependencies>
 
