@@ -1,6 +1,6 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.listener.entity.Suite;
+import io.orangebeard.listener.orangebeardv3client.entities.Suite;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class ToolchainRunningContext {
 
     public UUID getSuiteId(String fullSuiteName) {
         if (suites.containsKey(fullSuiteName)) {
-            return suites.get(fullSuiteName).getUuid();
+            return suites.get(fullSuiteName).getSuiteUUID();
         }
         return null;
     }
@@ -58,8 +58,8 @@ public class ToolchainRunningContext {
        return suitePath.get(suiteUUID);
     }
 
-    public void addSuite(String fullSuiteName, UUID suiteId, LocalDateTime startTime) {
-        suites.put(fullSuiteName, new Suite(suiteId, startTime));
+    public void addSuite(String fullSuiteName, Suite suite) {
+        suites.put(fullSuiteName, suite);
     }
     public void addSuitePath( UUID suiteId,String fullSuiteName) {
         suitePath.put(suiteId,fullSuiteName);
@@ -70,8 +70,6 @@ public class ToolchainRunningContext {
         return latestTest;
     }
 
-    public List<UUID> getAllTests() {
-        return new ArrayList<>(tests.values());
-    }
+
 }
 

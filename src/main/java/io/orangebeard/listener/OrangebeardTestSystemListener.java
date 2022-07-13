@@ -251,7 +251,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     public void testSystemStopped(TestSystem testSystem, Throwable throwable) {
         logger.info("Number of log requests: {}", numberOfLogRequests);
         numberOfLogRequests = 0;
-        stopAllTests();
         orangebeardV3Client.finishTestRun(runContext.getTestRunUUID(), new FinishTestRun(ZonedDateTime.now()));
         reset();
     }
@@ -301,12 +300,12 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             List<Suite> suiteList = orangebeardV3Client.startSuite(suiteItem);
             for (Suite suite : suiteList) {
                 if(suite.getParentUUID() == null) {
-                    runContext.addSuite(String.join(".", suite.getFullSuitePath()), suite.getSuiteUUID(), LocalDateTime.now()); //suite starttime is not coming from listener api
+                    runContext.addSuite(String.join(".", suite.getFullSuitePath()), suite); //suite starttime is not coming from listener api
                     runContext.addSuitePath(suite.getSuiteUUID(),String.join(".", suite.getFullSuitePath()));
                 }
                 else {
                     String parentSuitePath = runContext.getSuitePath(suite.getParentUUID());
-                    runContext.addSuite(format("%s.%s",parentSuitePath,String.join(".", suite.getLocalSuiteName())),suite.getSuiteUUID(),LocalDateTime.now());
+                    runContext.addSuite(format("%s.%s",parentSuitePath,String.join(".", suite.getLocalSuiteName())),suite);
                     this.runContext.addSuitePath(suite.getSuiteUUID(),format("%s.%s",parentSuitePath,String.join(".", suite.getLocalSuiteName())));
                 }
             }
@@ -333,18 +332,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
     }
 
-    private void stopAllTests() {
-        List<UUID> tests = runContext.getAllTests();
-
-        for (UUID testUUID : tests) {
-            stopTest(testUUID);
-        }
-    }
-
-    private void stopTest(UUID suiteId) {
-        FinishTest test = new FinishTest(runContext.getTestRunUUID(), null, ZonedDateTime.now());
-        orangebeardV3Client.FinishTest(suiteId, test);
-    }
 
     @SneakyThrows
     private Set<Attribute> getTestRunAttributes(String testSystemName) {
