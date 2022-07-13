@@ -283,7 +283,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         List<String> suitesToCreate = new ArrayList<>();
         List<String> suitePath =new ArrayList<>();
         UUID parentSuiteId = null;
-        UUID suiteId = null;
+        UUID suiteId;
 
         for(String suite : suites) {
             suitePath.add(suite);
@@ -296,7 +296,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
 
         if (!suitesToCreate.isEmpty()) {
-            StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId, null, new HashSet<Attribute>(), suitesToCreate); //description made min=1 in listenerapi
+            StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId, null, new HashSet<>(), suitesToCreate);
             List<Suite> suiteList = orangebeardV3Client.startSuite(suiteItem);
             for (Suite suite : suiteList) {
                 if(suite.getParentUUID() == null) {
