@@ -26,11 +26,14 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import fitnesse.testrunner.WikiTestPage;
 import fitnesse.testsystems.Assertion;
 import fitnesse.testsystems.ExceptionResult;
@@ -272,28 +275,12 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private void startSuite(WikiTestPage testPage) {
         String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
-        String[] suites = fullSuiteName.split("\\.");
-        List<String> suitesToCreate = new ArrayList<>();
-        List<String> suitePath = new ArrayList<>();
-        UUID parentSuiteId = null;
-        UUID suiteId;
+        List<String> suites =  Arrays.asList(fullSuiteName.split("\\."));
 
-        for (String suite : suites) {
-            suitePath.add(suite);
-            suiteId = runContext.getSuiteId(String.join(".", suitePath));
-            if (suiteId != null) {
-                parentSuiteId = suiteId;
-            } else {
-                suitesToCreate.add(suite);
-            }
-        }
+        StartSuiteRQ startSuite= runContext.getStartSuite(suites);
 
-        //StartSuiteRQ suiteItem= runContext.getStartSuite(Arrays.asList(suites));
-
-        if (!suitesToCreate.isEmpty()) {
-            StartSuiteRQ startSuiteRQ = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId, null, new HashSet<>(), suitesToCreate);
-
-            runContext.addSuites(orangebeardV3Client.startSuite(startSuiteRQ));
+        if ( (startSuite != null) &&(!startSuite.getSuiteNames().isEmpty())) {
+            runContext.addSuites(orangebeardV3Client.startSuite(startSuite));
         }
     }
 
@@ -322,7 +309,11 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         Set<io.orangebeard.client.entity.Attribute> tags = new HashSet<>(orangebeardProperties.getAttributes());
         tags.add(new io.orangebeard.client.entity.Attribute("Test System", testSystemName));
 
-        return new HashSet<>();
+        return tags
+                .stream()
+                .filter(Objects::nonNull)
+                .map(it -> new Attribute(it.getKey(), it.getValue()))
+                .collect(Collectors.toSet());
     }
 
     private static String getFitnesseRootPath(String propertyFileName) {
