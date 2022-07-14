@@ -22,6 +22,7 @@ public class ToolchainRunningContext {
     private final UUID testRun;
     private final HashMap<String, UUID> tests = new HashMap<>();
     private final HashMap<String, UUID> suites = new HashMap<>();
+    private final HashMap<UUID, String> suitePath = new HashMap<>();
 
     private String latestTest;
 
@@ -79,9 +80,13 @@ public class ToolchainRunningContext {
         suite.forEach(ss ->
         {
             if(ss.getParentUUID() == null) {
+                suitePath.put(ss.getSuiteUUID(),String.join(".",ss.getFullSuitePath()));
                 suites.put(String.join(".",ss.getFullSuitePath()),ss.getSuiteUUID());
             } else {
+                String parentSuitePath = suitePath.get(ss.getParentUUID());
                 suites.put(format("%s.%s",ss.getParentPath() ,ss.getFullSuitePath()),ss.getSuiteUUID());
+                suitePath.put(ss.getSuiteUUID(),format("%s.%s",parentSuitePath,String.join(".", ss.getLocalSuiteName())));
+
             }
         });
     }
