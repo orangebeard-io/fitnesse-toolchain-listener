@@ -1,18 +1,12 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.listener.orangebeardv3client.entities.StartSuiteRQ;
 import io.orangebeard.listener.orangebeardv3client.entities.Suite;
 
-import static java.lang.String.format;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-
 import java.util.UUID;
-import java.util.stream.Collectors;
+
+import static java.lang.String.format;
 
 /**
  * Parallel execution context and set of operations to interact with it
@@ -21,7 +15,7 @@ public class ToolchainRunningContext {
 
     private final UUID testRun;
     private final HashMap<String, UUID> tests = new HashMap<>();
-    private final HashMap<String, UUID> suites = new HashMap<>();
+    private final HashMap<String, UUID> suiteIndex = new HashMap<>();
 
     private String latestTest;
 
@@ -51,8 +45,8 @@ public class ToolchainRunningContext {
     }
 
     public UUID getSuiteId(String fullSuiteName) {
-        if (suites.containsKey(fullSuiteName)) {
-            return suites.get(fullSuiteName);
+        if (suiteIndex.containsKey(fullSuiteName)) {
+            return suiteIndex.get(fullSuiteName);
         }
         return null;
     }
@@ -74,23 +68,18 @@ public class ToolchainRunningContext {
 //        return new StartSuiteRQ(getTestRunUUID(), parentSuiteId, null, new HashSet<>(), suitesToCreate);
 //    }
 
-
-    public void addSuite(List<Suite> suite) {
-        suite.forEach(ss ->
-        {
-            if(ss.getParentUUID() == null) {
-                suites.put(String.join(".",ss.getFullSuitePath()),ss.getSuiteUUID());
+    public void addSuites(List<Suite> suites) {
+        suites.forEach(suite -> {
+            if (suite.getParentUUID() == null) {
+                this.suiteIndex.put(String.join(".", suite.getFullSuitePath()), suite.getSuiteUUID());
             } else {
-                suites.put(format("%s.%s",ss.getParentPath() ,ss.getFullSuitePath()),ss.getSuiteUUID());
+                this.suiteIndex.put(format("%s.%s", suite.getParentPath(), suite.getFullSuitePath()), suite.getSuiteUUID());
             }
         });
     }
 
-
     public String getLatestTestName() {
         return latestTest;
     }
-
-
 }
 
