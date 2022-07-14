@@ -16,4 +16,5 @@ public class Suite {
     private UUID parentUUID;
     private String localSuiteName;
     private List<String> fullSuitePath;
+    private List<String> parentPath;
 }

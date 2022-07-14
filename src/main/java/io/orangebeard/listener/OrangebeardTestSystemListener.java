@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -44,7 +45,6 @@ import io.orangebeard.listener.orangebeardv3client.entities.FinishTestRun;
 import io.orangebeard.listener.orangebeardv3client.entities.StartSuiteRQ;
 import io.orangebeard.listener.orangebeardv3client.entities.StartTest;
 import io.orangebeard.listener.orangebeardv3client.entities.StartTestRun;
-import io.orangebeard.listener.orangebeardv3client.entities.Suite;
 import io.orangebeard.listener.orangebeardv3client.entities.TestStatus;
 
 import io.orangebeard.listener.orangebeardv3client.OrangebeardV3Client;
@@ -185,7 +185,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     @Override
     public void testStarted(TestPage testPage) {
         startSuite((WikiTestPage) testPage);
-        StartTest startTest = getStartTestItem(testPage);
+        StartTest startTest = getStartTest(testPage);
         UUID testId = orangebeardV3Client.startTestItem( startTest);
 
         runContext.addTest(getTestName(testPage), testId);
@@ -295,20 +295,12 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             }
         }
 
+        //StartSuiteRQ suiteItem= runContext.getStartSuite(Arrays.asList(suites));
+
         if (!suitesToCreate.isEmpty()) {
             StartSuiteRQ suiteItem = new StartSuiteRQ(runContext.getTestRunUUID(), parentSuiteId, null, new HashSet<>(), suitesToCreate);
-            List<Suite> suiteList = orangebeardV3Client.startSuite(suiteItem);
-            for (Suite suite : suiteList) {
-                if(suite.getParentUUID() == null) {
-                    runContext.addSuite(String.join(".", suite.getFullSuitePath()), suite); //suite starttime is not coming from listener api
-                    runContext.addSuitePath(suite.getSuiteUUID(),String.join(".", suite.getFullSuitePath()));
-                }
-                else {
-                    String parentSuitePath = runContext.getSuitePath(suite.getParentUUID());
-                    runContext.addSuite(format("%s.%s",parentSuitePath,String.join(".", suite.getLocalSuiteName())),suite);
-                    this.runContext.addSuitePath(suite.getSuiteUUID(),format("%s.%s",parentSuitePath,String.join(".", suite.getLocalSuiteName())));
-                }
-            }
+
+            runContext.addSuite(orangebeardV3Client.startSuite(suiteItem));
         }
     }
 
@@ -361,7 +353,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return fitnesseRootPath;
     }
 
-    private StartTest getStartTestItem(TestPage testPage) {
+    private StartTest getStartTest(TestPage testPage) {
          String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
 
         StartTest.StartTestBuilder startTest = StartTest.builder()
