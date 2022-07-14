@@ -28,7 +28,7 @@ public class ToolchainRunningContextTest {
     }
 
     @Test
-    public void when_the_suitepath_is_given_returns_then_suitestobecreated_along_with_parentsuiteid() {
+    public void when_the_suitepath_is_given_then_returns_suitestobecreated_along_with_parentsuiteid() {
         String suiteName = "parentSuite.childsuite";
         String parentSuiteName = "parentSuite";
         UUID suiteId = UUID.fromString("77d58d71-babf-4038-bded-f2a618383b51");
