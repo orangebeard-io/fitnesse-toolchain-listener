@@ -275,11 +275,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private void startSuite(WikiTestPage testPage) {
         String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
-        List<String> suites =  Arrays.asList(fullSuiteName.split("\\."));
 
-        StartSuiteRQ startSuite= runContext.getStartSuite(suites);
+        StartSuiteRQ startSuite= runContext.getStartSuite(fullSuiteName);
 
-        if ( (startSuite != null) &&(!startSuite.getSuiteNames().isEmpty())) {
+        if (startSuite != null) {
             runContext.addSuites(orangebeardV3Client.startSuite(startSuite));
         }
     }

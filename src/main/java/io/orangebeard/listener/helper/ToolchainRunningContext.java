@@ -4,6 +4,7 @@ import io.orangebeard.listener.orangebeardv3client.entities.StartSuiteRQ;
 import io.orangebeard.listener.orangebeardv3client.entities.Suite;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,7 +56,9 @@ public class ToolchainRunningContext {
         return null;
     }
 
-    public StartSuiteRQ getStartSuite(List<String> suiteNames) {
+    public StartSuiteRQ getStartSuite(String fullSuiteName) {
+        String[] suiteNames =  fullSuiteName.split("\\.");
+
         UUID parentSuiteId = null;
         List<String> suitesToCreate = new ArrayList<>();
         List<String> suitePath =new ArrayList<>();
@@ -69,6 +72,8 @@ public class ToolchainRunningContext {
                 suitesToCreate.add(suite);
             }
         }
+        if(suitesToCreate.isEmpty())
+            return null;
         return new StartSuiteRQ(getTestRunUUID(), parentSuiteId, null, new HashSet<>(), suitesToCreate);
     }
 

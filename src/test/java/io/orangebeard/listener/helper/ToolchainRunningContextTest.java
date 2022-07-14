@@ -39,7 +39,7 @@ public class ToolchainRunningContextTest {
         ToolchainRunningContext toolchainRunningContext = new ToolchainRunningContext(UUID.randomUUID());
 
         toolchainRunningContext.addSuites(parentSuite);
-        StartSuiteRQ startSuite= toolchainRunningContext.getStartSuite(Arrays.asList(suiteName.split("\\.")));
+        StartSuiteRQ startSuite= toolchainRunningContext.getStartSuite(suiteName);
 
         assertThat(startSuite.getParentSuiteUUID()).isEqualTo(parentSuiteId);
         assertThat(startSuite.getSuiteNames()).containsOnly("childsuite");
