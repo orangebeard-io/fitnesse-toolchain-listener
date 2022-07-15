@@ -4,10 +4,10 @@ import io.orangebeard.listener.orangebeardv3client.entities.StartSuiteRQ;
 import io.orangebeard.listener.orangebeardv3client.entities.Suite;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static java.lang.String.format;
@@ -19,8 +19,8 @@ public class ToolchainRunningContext {
 
     private final UUID testRun;
     private final HashMap<String, UUID> tests = new HashMap<>();
-    private final HashMap<String, UUID> suiteIndex = new HashMap<>();
-    private final HashMap<UUID, String> suitePath = new HashMap<>();
+    private final Map<String, UUID> suiteUUIDIndex = new HashMap<>();
+    private final Map<UUID, String> suitePathIndex = new HashMap<>();
 
     private String latestTest;
 
@@ -50,43 +50,44 @@ public class ToolchainRunningContext {
     }
 
     public UUID getSuiteId(String fullSuiteName) {
-        if (suiteIndex.containsKey(fullSuiteName)) {
-            return suiteIndex.get(fullSuiteName);
+        if (suiteUUIDIndex.containsKey(fullSuiteName)) {
+            return suiteUUIDIndex.get(fullSuiteName);
         }
         return null;
     }
 
     public StartSuiteRQ getStartSuite(String fullSuiteName) {
-        String[] suiteNames =  fullSuiteName.split("\\.");
+        String[] suiteNames = fullSuiteName.split("\\.");
 
         UUID parentSuiteId = null;
         List<String> suitesToCreate = new ArrayList<>();
-        List<String> suitePath =new ArrayList<>();
+        List<String> suitePath = new ArrayList<>();
         UUID suiteId;
-        for(String suite : suiteNames) {
+        for (String suite : suiteNames) {
             suitePath.add(suite);
-            suiteId = getSuiteId(String.join(".",suitePath));
-            if(suiteId != null) {
-                parentSuiteId=suiteId;
-            }else {
+            suiteId = getSuiteId(String.join(".", suitePath));
+            if (suiteId != null) {
+                parentSuiteId = suiteId;
+            } else {
                 suitesToCreate.add(suite);
             }
         }
-        if(suitesToCreate.isEmpty())
+        if (suitesToCreate.isEmpty()) {
             return null;
+        }
         return new StartSuiteRQ(getTestRunUUID(), parentSuiteId, null, new HashSet<>(), suitesToCreate);
     }
 
     public void addSuites(List<Suite> suites) {
-        if(!suites.isEmpty()) {
+        if (suites != null) {
             suites.forEach(suite -> {
                 if (suite.getParentUUID() == null) {
-                    suitePath.put(suite.getSuiteUUID(), String.join(".", suite.getFullSuitePath()));
-                    this.suiteIndex.put(String.join(".", suite.getFullSuitePath()), suite.getSuiteUUID());
+                    this.suitePathIndex.put(suite.getSuiteUUID(), String.join(".", suite.getFullSuitePath()));
+                    this.suiteUUIDIndex.put(String.join(".", suite.getFullSuitePath()), suite.getSuiteUUID());
                 } else {
-                    String parentSuitePath = suitePath.get(suite.getParentUUID());
-                    this.suiteIndex.put(format("%s.%s", parentSuitePath, suite.getLocalSuiteName()), suite.getSuiteUUID());
-                    suitePath.put(suite.getSuiteUUID(), format("%s.%s", parentSuitePath, String.join(".", suite.getLocalSuiteName())));
+                    String parentSuitePath = suitePathIndex.get(suite.getParentUUID());
+                    this.suitePathIndex.put(suite.getSuiteUUID(), format("%s.%s", parentSuitePath, String.join(".", suite.getLocalSuiteName())));
+                    this.suiteUUIDIndex.put(format("%s.%s", parentSuitePath, suite.getLocalSuiteName()), suite.getSuiteUUID());
                 }
             });
         }
