@@ -1,6 +1,5 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.Status;
 import io.orangebeard.client.entity.TestItemType;
 
@@ -9,6 +8,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import fitnesse.testsystems.ExecutionResult;
+import io.orangebeard.listener.orangebeardv3client.entities.TestType;
+import io.orangebeard.listener.orangebeardv3client.entities.Attribute;
 
 import static io.orangebeard.client.entity.Status.FAILED;
 import static io.orangebeard.client.entity.Status.PASSED;
@@ -35,8 +36,20 @@ public class TypeConverter {
                 return TestItemType.BEFORE_METHOD;
             case "SuiteTearDown":
                 return TestItemType.AFTER_METHOD;
+            case "test":
+                return TestItemType.TEST;
             default:
                 return TestItemType.STEP;
+        }
+    }
+    public static TestType v3ClientDeterminePageType(String pageName) {
+        switch (pageName) {
+            case "SuiteSetUp":
+                return TestType.BEFORE;
+            case "SuiteTearDown":
+                return TestType.AFTER;
+            default:
+                return TestType.TEST;
         }
     }
 

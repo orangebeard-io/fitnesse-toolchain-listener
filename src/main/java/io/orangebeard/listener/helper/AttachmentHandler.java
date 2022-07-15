@@ -1,6 +1,5 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.entity.Attachment;
 import io.orangebeard.client.entity.LogLevel;
 
@@ -11,17 +10,20 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import io.orangebeard.listener.orangebeardv3client.OrangebeardV3Client;
+
 import net.lingala.zip4j.ZipFile;
 import org.slf4j.LoggerFactory;
 
 public class AttachmentHandler {
     private static final Pattern attachmentPattern = Pattern.compile("href=\"([^$<>\"]*)\"");
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(AttachmentHandler.class);
-    private final OrangebeardClient orangebeardClient;
+    private final OrangebeardV3Client orangebeardV3Client;
     private final String rootPath;
 
-    public AttachmentHandler(OrangebeardClient orangebeardClient, String rootPath) {
-        this.orangebeardClient = orangebeardClient;
+    public AttachmentHandler(OrangebeardV3Client orangebeardV3Client, String rootPath) {
+        this.orangebeardV3Client = orangebeardV3Client;
         this.rootPath = rootPath;
     }
 
@@ -48,7 +50,7 @@ public class AttachmentHandler {
                             .time(LocalDateTime.now())
                             .build();
 
-                    orangebeardClient.sendAttachment(attachment);
+                    orangebeardV3Client.sendAttachment(attachment);
                 } catch (IOException | InvalidPathException e) {
                     logger.info("Unable to read attachment file for: " + attachments.group(1));
                 }
@@ -72,7 +74,7 @@ public class AttachmentHandler {
                     .time(LocalDateTime.now())
                     .build();
 
-            orangebeardClient.sendAttachment(attachment);
+            orangebeardV3Client.sendAttachment(attachment);
         } catch (IOException e) {
             logger.warn("An exception occurred when attempting to attach the html report to the launch", e);
         }

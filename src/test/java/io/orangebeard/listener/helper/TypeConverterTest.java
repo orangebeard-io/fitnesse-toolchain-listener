@@ -1,7 +1,7 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.TestItemType;
+import io.orangebeard.listener.orangebeardv3client.entities.Attribute;
 
 import java.util.Set;
 import org.junit.Test;
@@ -18,14 +18,14 @@ public class TypeConverterTest {
     }
 
     @Test
-    public void when_attributes_are_pty_an_empty_list_is_returned() {
+    public void attributes_can_be_converted() {
         Set<Attribute> result = TypeConverter.convertAttributes("bla,blaa;blaaa;blaaaa");
 
         assertThat(result).containsOnly(
-                new Attribute("bla"),
                 new Attribute("blaa"),
-                new Attribute("blaaa"),
-                new Attribute("blaaaa"));
+                new Attribute("bla"),
+                new Attribute("blaaaa"),
+                new Attribute("blaaa"));
     }
 
     @Test

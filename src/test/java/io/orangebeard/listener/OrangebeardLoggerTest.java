@@ -1,10 +1,12 @@
 package io.orangebeard.listener;
 
-import io.orangebeard.client.OrangebeardV2Client;
 import io.orangebeard.client.entity.Attachment;
 import io.orangebeard.listener.helper.AttachmentHandler;
 
 import java.util.UUID;
+
+import io.orangebeard.listener.orangebeardv3client.OrangebeardV3Client;
+
 import org.junit.Test;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -14,13 +16,13 @@ import static org.mockito.Mockito.verify;
 
 public class OrangebeardLoggerTest {
 
-    private final OrangebeardV2Client orangebeardV2Client = mock(OrangebeardV2Client.class);
-    private final AttachmentHandler orangebeardLogger = new AttachmentHandler(orangebeardV2Client, "ROOTPATH");
+    private final OrangebeardV3Client orangebeardV3Client = mock(OrangebeardV3Client.class);
+    private final AttachmentHandler orangebeardLogger = new AttachmentHandler(orangebeardV3Client, "ROOTPATH");
 
     @Test
     public void mailto_links_are_not_attachments() {
         orangebeardLogger.attachFilesIfPresent(UUID.randomUUID(), UUID.randomUUID(), MESSAGE_WITH_MAILTO_LINKS);
-        verify(orangebeardV2Client, never()).sendAttachment(any(Attachment.class));
+        verify(orangebeardV3Client, never()).sendAttachment(any(Attachment.class));
     }
 
     private static final String MESSAGE_WITH_MAILTO_LINKS = "<table class=\"toolchainTable scriptTable\">\n" +

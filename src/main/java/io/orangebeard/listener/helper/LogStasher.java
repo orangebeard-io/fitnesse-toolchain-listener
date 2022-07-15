@@ -1,7 +1,7 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.entity.Log;
+import io.orangebeard.listener.orangebeardv3client.OrangebeardV3Client;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,11 +11,11 @@ import java.util.UUID;
 
 public class LogStasher {
 
-    private final OrangebeardClient orangebeardClient;
+    private final OrangebeardV3Client orangebeardV3Client;
     private final Map<UUID, Set<Log>> stashedLogs;
 
-    public LogStasher(OrangebeardClient orangebeardClient) {
-        this.orangebeardClient = orangebeardClient;
+    public LogStasher(OrangebeardV3Client orangebeardV3Client) {
+        this.orangebeardV3Client = orangebeardV3Client;
         this.stashedLogs = new HashMap<>();
     }
 
@@ -30,7 +30,7 @@ public class LogStasher {
     }
 
     public void sendLogs(UUID testId) {
-        orangebeardClient.log(stashedLogs.get(testId));
+        orangebeardV3Client.log(stashedLogs.get(testId));
         stashedLogs.remove(testId);
     }
 }
