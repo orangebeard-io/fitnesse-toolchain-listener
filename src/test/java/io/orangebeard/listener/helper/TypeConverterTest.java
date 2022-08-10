@@ -29,16 +29,16 @@ public class TypeConverterTest {
     }
 
     @Test
-    public void suitesetup_is_a_before_method() {
+    public void suitesetup_is_a_before_suite() {
         TestItemType result = TypeConverter.determinePageType("SuiteSetUp");
 
-        assertThat(result).isEqualTo(TestItemType.BEFORE_METHOD);
+        assertThat(result).isEqualTo(TestItemType.BEFORE_SUITE);
     }
 
     @Test
-    public void suiteteardown_is_an_after_method() {
+    public void suiteteardown_is_an_after_suite() {
         TestItemType result = TypeConverter.determinePageType("SuiteTearDown");
 
-        assertThat(result).isEqualTo(TestItemType.AFTER_METHOD);
+        assertThat(result).isEqualTo(TestItemType.AFTER_SUITE);
     }
 }

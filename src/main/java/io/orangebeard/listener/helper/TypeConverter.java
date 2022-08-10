@@ -32,11 +32,11 @@ public class TypeConverter {
     public static TestItemType determinePageType(String pageName) {
         switch (pageName) {
             case "SuiteSetUp":
-                return TestItemType.BEFORE_METHOD;
+                return TestItemType.BEFORE_SUITE;
             case "SuiteTearDown":
-                return TestItemType.AFTER_METHOD;
+                return TestItemType.AFTER_SUITE;
             default:
-                return TestItemType.STEP;
+                return TestItemType.TEST;
         }
     }
 
