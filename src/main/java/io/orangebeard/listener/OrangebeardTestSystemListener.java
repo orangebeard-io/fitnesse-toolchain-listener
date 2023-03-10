@@ -1,8 +1,10 @@
 package io.orangebeard.listener;
 
+import io.orangebeard.client.LatestOrangebeardClient;
 import io.orangebeard.client.OrangebeardClient;
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.OrangebeardV2Client;
+import io.orangebeard.client.OrangebeardV3Client;
 import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.FinishTestItem;
 import io.orangebeard.client.entity.FinishTestRun;
@@ -70,6 +72,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private final AttachmentHandler attachmentHandler;
     private final LogStasher logStasher;
     private OrangebeardClient orangebeardClient;
+    private LatestOrangebeardClient latestOrangebeardClient;
     private ToolchainRunningContext runContext;
 
     /**
@@ -79,12 +82,14 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             OrangebeardProperties orangebeardProperties,
             ToolchainRunningContext runContext,
             OrangebeardClient orangebeardClient,
+            LatestOrangebeardClient latestOrangebeardClient,
             AttachmentHandler attachmentHandler,
             ScenarioLibraries scenarioLibraries,
             LogStasher logStasher) {
         this.orangebeardProperties = orangebeardProperties;
         this.runContext = runContext;
         this.orangebeardClient = orangebeardClient;
+        this.latestOrangebeardClient = latestOrangebeardClient;
         this.attachmentHandler = attachmentHandler;
         this.scenarioLibraries = scenarioLibraries;
         this.logStasher = logStasher;
@@ -97,6 +102,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.scenarioLibraries = new ScenarioLibraries();
         this.rootPath = getFitnesseRootPath(propertyFileName);
         this.orangebeardClient = createOrangebeardClient(orangebeardProperties);
+        this.latestOrangebeardClient = createOrangebeardV3Client(orangebeardProperties);
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
         this.logStasher = new LogStasher(orangebeardClient);
     }
@@ -110,6 +116,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         logger.info(format("Log level is set to: %s", orangebeardProperties.getLogLevel()));
         this.scenarioLibraries = new ScenarioLibraries();
         this.orangebeardClient = createOrangebeardClient(orangebeardProperties);
+        this.latestOrangebeardClient = createOrangebeardV3Client(orangebeardProperties);
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
         this.logStasher = new LogStasher(orangebeardClient);
     }
@@ -120,6 +127,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         this.scenarioLibraries = new ScenarioLibraries();
         this.rootPath = getFitnesseRootPath(propertyFileName);
         this.orangebeardClient = createOrangebeardClient(orangebeardProperties);
+        this.latestOrangebeardClient = createOrangebeardV3Client(orangebeardProperties);
         this.attachmentHandler = new AttachmentHandler(orangebeardClient, rootPath);
         this.logStasher = new LogStasher(orangebeardClient);
     }
@@ -128,13 +136,22 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     public void testSystemStarted(TestSystem testSystem) {
         orangebeardProperties.checkPropertiesArePresent();
 
-        StartTestRun testRun = new StartTestRun(
-                orangebeardProperties.getTestSetName(),
-                orangebeardProperties.getDescription(),
-                getTestRunAttributes(testSystem.getName()),
-                ChangedComponentsHelper.getChangedComponents());
+        // If a test-run UUID is present in orangebeard.properties it belongs to the uuid that was retrieved from
+        // announcing a test run and that scenario is triggered from the atp-integration test pipeline.
+        // If no UUID is present then start the test run normally by providing a proper StartTestRun object.
 
-        this.runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testRun));
+        if (orangebeardProperties.isAnnouncedUUIDPresent()) {
+            UUID testRunUUID = orangebeardProperties.getTestRunUUID();
+            latestOrangebeardClient.startAnnouncedTestRun(testRunUUID);
+            this.runContext = new ToolchainRunningContext(testRunUUID);
+        } else {
+            StartTestRun testRun = new StartTestRun(
+                    orangebeardProperties.getTestSetName(),
+                    orangebeardProperties.getDescription(),
+                    getTestRunAttributes(testSystem.getName()),
+                    ChangedComponentsHelper.getChangedComponents());
+            this.runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testRun));
+        }
     }
 
     @Override
@@ -384,6 +401,14 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     private static OrangebeardClient createOrangebeardClient(OrangebeardProperties orangebeardProperties) {
         return new OrangebeardV2Client(
+                orangebeardProperties.getEndpoint(),
+                orangebeardProperties.getAccessToken(),
+                orangebeardProperties.getProjectName(),
+                orangebeardProperties.requiredValuesArePresent());
+    }
+
+    private static LatestOrangebeardClient createOrangebeardV3Client(OrangebeardProperties orangebeardProperties) {
+        return new OrangebeardV3Client(
                 orangebeardProperties.getEndpoint(),
                 orangebeardProperties.getAccessToken(),
                 orangebeardProperties.getProjectName(),
