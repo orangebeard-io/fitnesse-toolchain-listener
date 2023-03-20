@@ -1,7 +1,6 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.OrangebeardClient;
-import io.orangebeard.client.entity.Attachment;
+import io.orangebeard.client.OrangebeardV3Client;
 import io.orangebeard.client.entity.LogLevel;
 
 import java.io.File;
@@ -11,16 +10,19 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import io.orangebeard.client.entity.attachment.Attachment;
+
 import net.lingala.zip4j.ZipFile;
 import org.slf4j.LoggerFactory;
 
 public class AttachmentHandler {
     private static final Pattern attachmentPattern = Pattern.compile("href=\"([^$<>\"]*)\"");
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(AttachmentHandler.class);
-    private final OrangebeardClient orangebeardClient;
+    private final OrangebeardV3Client orangebeardClient;
     private final String rootPath;
 
-    public AttachmentHandler(OrangebeardClient orangebeardClient, String rootPath) {
+    public AttachmentHandler(OrangebeardV3Client orangebeardClient, String rootPath) {
         this.orangebeardClient = orangebeardClient;
         this.rootPath = rootPath;
     }
@@ -39,7 +41,12 @@ public class AttachmentHandler {
                 try {
                     File attachmentFile = new File(rootPath, attachments.group(1));
                     String fileName = attachmentFile.getName();
-                    Attachment attachment = Attachment.builder()
+
+                    Attachment.AttachmentFile file = new Attachment.AttachmentFile();
+                    Attachment.AttachmentMetaData metaData = new Attachment.AttachmentMetaData();
+                    Attachment attachment = new Attachment(file, )
+
+                            .builder()
                             .file(new Attachment.File(attachmentFile))
                             .message(fileName)
                             .logLevel(LogLevel.debug)
