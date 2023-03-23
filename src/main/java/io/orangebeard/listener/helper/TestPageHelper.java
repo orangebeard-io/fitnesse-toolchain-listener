@@ -6,6 +6,9 @@ import fitnesse.testsystems.TestPage;
 import fitnesse.wiki.PageCrawler;
 
 public class TestPageHelper {
+    private TestPageHelper() {
+        throw new IllegalStateException("Class has only static methods.");
+    }
 
     public static String getFullTestName(TestPage testPage) {
         return testPage.getFullPath();

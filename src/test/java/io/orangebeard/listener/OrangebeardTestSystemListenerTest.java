@@ -112,7 +112,7 @@ public class OrangebeardTestSystemListenerTest {
         orangebeardTestSystemListener.testOutputChunk(testPage, "");
 
         verify(orangebeardClient, times(1)).log(any(Log.class));
-        verify(orangebeardLogger).attachFilesIfPresent(any(), any(), any());
+        verify(orangebeardLogger).attachFilesIfPresent(any(UUID.class), any(UUID.class), any(), any(UUID.class));
     }
 
     @Test

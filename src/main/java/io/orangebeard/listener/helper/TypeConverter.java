@@ -1,8 +1,6 @@
 package io.orangebeard.listener.helper;
 
 import io.orangebeard.client.entity.Attribute;
-import io.orangebeard.client.entity.Status;
-import io.orangebeard.client.entity.TestItemType;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -10,9 +8,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import fitnesse.testsystems.ExecutionResult;
 
-import static io.orangebeard.client.entity.Status.FAILED;
-import static io.orangebeard.client.entity.Status.PASSED;
-import static io.orangebeard.client.entity.Status.SKIPPED;
+import io.orangebeard.client.entity.test.TestStatus;
+import io.orangebeard.client.entity.test.TestType;
+
+import static io.orangebeard.client.entity.test.TestStatus.FAILED;
+import static io.orangebeard.client.entity.test.TestStatus.PASSED;
+import static io.orangebeard.client.entity.test.TestStatus.SKIPPED;
 
 public class TypeConverter {
 
@@ -29,18 +30,19 @@ public class TypeConverter {
         return Collections.emptySet();
     }
 
-    public static TestItemType determinePageType(String pageName) {
+    public static TestType determinePageType(String pageName) {
         switch (pageName) {
             case "SuiteSetUp":
-                return TestItemType.BEFORE_SUITE;
+                return TestType.BEFORE;
             case "SuiteTearDown":
-                return TestItemType.AFTER_SUITE;
+                return TestType.AFTER;
             default:
-                return TestItemType.TEST;
+                return TestType.TEST;
         }
     }
 
-    public static Status convertTestResultStatus(ExecutionResult result) {
+
+    public static TestStatus convertTestResultStatus(ExecutionResult result) {
         switch (result) {
             case ERROR:
             case FAIL:
