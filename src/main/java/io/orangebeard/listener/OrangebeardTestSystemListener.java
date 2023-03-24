@@ -70,6 +70,11 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private final AttachmentHandler attachmentHandler;
     private final LogStasher logStasher;
     private OrangebeardV3Client orangebeardClient;
+
+    public ToolchainRunningContext getRunContext() {
+        return runContext;
+    }
+
     private ToolchainRunningContext runContext;
 
     /**
@@ -182,7 +187,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     @Override
     public void testStarted(TestPage testPage) {
-        StartTest startTest = getStartedTest(testPage);
+        StartTest startTest = getStartTest(testPage);
 
         // Get the full suite name here, so we can split the full suite string in separate suites and iterate
         // to check if the suite is already in the run context or not.
@@ -372,7 +377,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return fitnesseRootPath;
     }
 
-    private StartTest getStartedTest(TestPage testPage) {
+    private StartTest getStartTest(TestPage testPage) {
         StartTest.StartTestBuilder startTest = StartTest.builder()
                 .testRunUUID(runContext.getTestRunUUID())
                 .startTime(ZonedDateTime.now())
