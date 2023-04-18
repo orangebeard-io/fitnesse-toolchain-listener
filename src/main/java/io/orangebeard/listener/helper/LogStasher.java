@@ -1,7 +1,7 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.OrangebeardClient;
-import io.orangebeard.client.entity.Log;
+import io.orangebeard.client.OrangebeardV3Client;
+import io.orangebeard.client.entity.log.Log;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,11 +10,10 @@ import java.util.Set;
 import java.util.UUID;
 
 public class LogStasher {
-
-    private final OrangebeardClient orangebeardClient;
+    private final OrangebeardV3Client orangebeardClient;
     private final Map<UUID, Set<Log>> stashedLogs;
 
-    public LogStasher(OrangebeardClient orangebeardClient) {
+    public LogStasher(OrangebeardV3Client orangebeardClient) {
         this.orangebeardClient = orangebeardClient;
         this.stashedLogs = new HashMap<>();
     }
@@ -30,7 +29,11 @@ public class LogStasher {
     }
 
     public void sendLogs(UUID testId) {
-        orangebeardClient.log(stashedLogs.get(testId));
+        // TODO Not very efficient to send separate request for a set of logs
+        Set<Log> logs = stashedLogs.get(testId);
+        for (Log toBeReported : logs) {
+            orangebeardClient.log(toBeReported);
+        }
         stashedLogs.remove(testId);
     }
 }

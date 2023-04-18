@@ -1,11 +1,14 @@
 package io.orangebeard.listener;
 
-import io.orangebeard.client.OrangebeardClient;
+import fitnesse.testsystems.TestPage;
+
 import io.orangebeard.client.OrangebeardProperties;
-import io.orangebeard.client.entity.Log;
+import io.orangebeard.client.OrangebeardV3Client;
+import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.LogFormat;
 import io.orangebeard.client.entity.LogLevel;
 import io.orangebeard.client.entity.StartTestRun;
+import io.orangebeard.client.entity.log.Log;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.helper.AttachmentHandler;
 import io.orangebeard.listener.helper.LogStasher;
@@ -13,6 +16,7 @@ import io.orangebeard.listener.helper.TestPageHelper;
 import io.orangebeard.listener.helper.ToolchainRunningContext;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import fitnesse.testrunner.WikiTestPage;
 import fitnesse.testsystems.TestSummary;
@@ -20,6 +24,7 @@ import fitnesse.testsystems.TestSystem;
 import fitnesse.wiki.PageData;
 import fitnesse.wiki.WikiPage;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -32,7 +37,9 @@ import org.junit.runner.RunWith;
 import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -40,32 +47,105 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({TestPageHelper.class})
+@PrepareForTest(TestPageHelper.class)
 public class OrangebeardTestSystemListenerTest {
-
     @Mock
     private OrangebeardProperties orangebeardProperties;
-
     @Mock
     private ToolchainRunningContext runningContext;
-
     @Mock
-    private OrangebeardClient orangebeardClient;
-
+    private OrangebeardV3Client orangebeardClient;
     @Mock
     private AttachmentHandler orangebeardLogger;
-
     @Mock
     private ScenarioLibraries scenarioLibraries;
-
     @Mock
     private LogStasher logStasher;
-
     @Mock
     private WikiTestPage testPage;
+    @Mock
+    private WikiPage wikiPage;
+    @Mock
+    private PageData testPageData;
 
     @InjectMocks
     private OrangebeardTestSystemListener orangebeardTestSystemListener;
+
+    private ArgumentCaptor<UUID> uuidArgumentCaptor;
+    private ArgumentCaptor<StartTestRun> startTestRunArgumentCaptor;
+    private String testSetName;
+    private String description;
+    private TestSystem testSystem;
+    private Set<Attribute> attributes;
+    private String fullSuiteName;
+    private String testPageName;
+    private String sourcePageName;
+
+    @Before
+    public void setup() {
+        testSystem = mock(TestSystem.class);
+        uuidArgumentCaptor = ArgumentCaptor.forClass(UUID.class);
+        startTestRunArgumentCaptor = ArgumentCaptor.forClass(StartTestRun.class);
+        testSetName = "testSetName";
+        description = "desc";
+        attributes = Set.of(new Attribute("key", "value"));
+        fullSuiteName = "IntegrationTests.ApiTests.Projects";
+        testPageName = "SuiteSetUp";
+        sourcePageName = "Projects";
+    }
+
+    @Test
+    public void test_system_is_started_properly_when_uuid_is_present() {
+        UUID testRunUUID = UUID.randomUUID();
+
+        // We want to verify here that the flow is processed properly and that announce test run is started
+        doNothing().when(orangebeardProperties).checkPropertiesArePresent();
+        when(orangebeardProperties.isAnnouncedUUIDPresent()).thenReturn(true);
+        when(orangebeardProperties.getTestRunUUID()).thenReturn(testRunUUID);
+        when(orangebeardProperties.getTestSetName()).thenReturn(testSetName);
+        when(orangebeardProperties.getDescription()).thenReturn(description);
+        when(orangebeardProperties.getAttributes()).thenReturn(attributes);
+        doNothing().when(orangebeardClient).startAnnouncedTestRun(any(UUID.class));
+
+        orangebeardTestSystemListener.testSystemStarted(testSystem);
+
+        verify(orangebeardClient, times(1)).startAnnouncedTestRun(uuidArgumentCaptor.capture());
+        assertThat(uuidArgumentCaptor.getValue()).isEqualTo(testRunUUID);
+
+        // We want to verify here if the proper value of test run uuid is passed to the running context
+        ToolchainRunningContext runContext = orangebeardTestSystemListener.getRunContext();
+        assertThat(runContext.getTestRunUUID()).isEqualTo(testRunUUID);
+
+        verify(orangebeardClient, times(0)).startTestRun(any());
+    }
+
+    @Test
+    public void test_system_is_started_properly_when_uuid_is_not_present() {
+        UUID testRunUUID = UUID.randomUUID();
+
+        // We want to verify here that the flow is processed properly and that test run is started
+        doNothing().when(orangebeardProperties).checkPropertiesArePresent();
+        when(orangebeardProperties.isAnnouncedUUIDPresent()).thenReturn(false);
+        when(orangebeardProperties.getTestRunUUID()).thenReturn(testRunUUID);
+        when(orangebeardProperties.getTestSetName()).thenReturn(testSetName);
+        when(orangebeardProperties.getDescription()).thenReturn(description);
+        when(orangebeardProperties.getAttributes()).thenReturn(attributes);
+        when(orangebeardClient.startTestRun(any())).thenReturn(testRunUUID);
+        when(testSystem.getName()).thenReturn("Test System");
+
+        orangebeardTestSystemListener.testSystemStarted(testSystem);
+
+        verify(orangebeardClient, times(1)).startTestRun(startTestRunArgumentCaptor.capture());
+        assertThat(startTestRunArgumentCaptor.getValue().getName()).isEqualTo(testSetName);
+        assertThat(startTestRunArgumentCaptor.getValue().getDescription()).isEqualTo(description);
+
+        // We want to verify here if the proper object of StartTestRun is passed to the running context
+        // If the proper StartTestRun is passed then run context will be initialized properly and an uuid will be returned
+        ToolchainRunningContext runContext = orangebeardTestSystemListener.getRunContext();
+        assertThat(runContext.getTestRunUUID()).isNotNull();
+
+        verify(orangebeardClient, times(0)).startAnnouncedTestRun(any());
+    }
 
     @Test
     public void when_a_test_system_is_started_the_orangebeard_client_is_called() {
@@ -93,26 +173,34 @@ public class OrangebeardTestSystemListenerTest {
         TestSystem testSystem = mock(TestSystem.class);
         when(testSystem.getName()).thenReturn("test system name");
 
-        withEnvironmentVariable("orangebeard.changedComponents", "componentA, componentB")
-                .execute(() -> {
-                    orangebeardTestSystemListener.testSystemStarted(testSystem);
+        withEnvironmentVariable("orangebeard.changedComponents", "componentA, componentB").execute(() -> {
+            orangebeardTestSystemListener.testSystemStarted(testSystem);
 
-                    ArgumentCaptor<StartTestRun> argumentCaptor = ArgumentCaptor.forClass(StartTestRun.class);
-                    verify(orangebeardClient).startTestRun(argumentCaptor.capture());
+            ArgumentCaptor<StartTestRun> argumentCaptor = ArgumentCaptor.forClass(StartTestRun.class);
+            verify(orangebeardClient).startTestRun(argumentCaptor.capture());
 
-                    Assertions.assertThat(argumentCaptor.getValue().getChangedComponents()).extracting("componentName").containsOnly("componentA", "componentB");
-                });
+            Assertions.assertThat(argumentCaptor.getValue().getChangedComponents()).extracting("componentName").containsOnly("componentA", "componentB");
+        });
     }
 
     @Test
     public void when_a_log_is_not_in_the_scenario_library_it_is_logged_separately() {
+        UUID testId = UUID.randomUUID();
+        UUID testRunUUID = UUID.randomUUID();
+        UUID logUUID = UUID.randomUUID();
+        String latestTestName = "test name";
+
         when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)).thenReturn(true);
+        when(runningContext.getTestRunUUID()).thenReturn(testRunUUID);
+        when(runningContext.getLatestTestName()).thenReturn(latestTestName);
+        when(runningContext.getTestId(anyString())).thenReturn(testId);
         when(scenarioLibraries.contains(any())).thenReturn(false);
+        when(orangebeardClient.log(any())).thenReturn(logUUID);
 
         orangebeardTestSystemListener.testOutputChunk(testPage, "");
 
         verify(orangebeardClient, times(1)).log(any(Log.class));
-        verify(orangebeardLogger).attachFilesIfPresent(any(), any(), any());
+        verify(orangebeardLogger, times(1)).attachFilesIfPresent(eq(testId), eq(testRunUUID), anyString(), eq(logUUID));
     }
 
     @Test
@@ -167,31 +255,84 @@ public class OrangebeardTestSystemListenerTest {
     }
 
     @Test
-    public void a_test_can_be_started() {
+    public void test_can_be_started_properly_in_existing_suite() {
         UUID suiteUUID = UUID.fromString("f07908f8-70c4-4c10-ae27-771a8372a0ef");
+        UUID testRunUUID = UUID.randomUUID();
+
+        mockStatic(TestPageHelper.class);
+        when(TestPageHelper.getFullSuiteName(any(TestPage.class))).thenReturn(fullSuiteName);
+
+        when(runningContext.getTestRunUUID()).thenReturn(testRunUUID);
+        when(runningContext.getSuiteId(any())).thenReturn(suiteUUID);
+        when(runningContext.suiteExists(anyString())).thenReturn(true);
 
         when(testPage.getFullPath()).thenReturn("test");
-        when(testPage.getName()).thenReturn("test");
-        when(runningContext.getSuiteId(any())).thenReturn(suiteUUID);
-        when(testPage.getData()).thenReturn(mock(PageData.class));
+        when(testPage.getName()).thenReturn(testPageName);
+        when(testPage.getData()).thenReturn(testPageData);
+        when(testPage.getSourcePage()).thenReturn(wikiPage);
+        when(wikiPage.getParent()).thenReturn(wikiPage);
+        when(wikiPage.getName()).thenReturn(sourcePageName);
+        when(testPageData.getAttribute(anyString())).thenReturn("Suites");
 
         orangebeardTestSystemListener.testStarted(testPage);
 
-        verify(orangebeardClient).startTestItem(eq(suiteUUID), any());
+        verify(orangebeardClient, times(1)).startTest(any());
+        verify(orangebeardClient, times(0)).startSuite(any());
+        verify(runningContext, times(0)).addSuite(anyString(), any(UUID.class));
+    }
+
+    @Test
+    public void test_can_be_started_properly_in_new_suite() {
+        UUID suiteUUID = UUID.fromString("f07908f8-70c4-4c10-ae27-771a8372a0ef");
+        UUID testRunUUID = UUID.randomUUID();
+
+        mockStatic(TestPageHelper.class);
+        when(TestPageHelper.getFullSuiteName(any(TestPage.class))).thenReturn(fullSuiteName);
+
+        when(runningContext.getTestRunUUID()).thenReturn(testRunUUID);
+        when(runningContext.getSuiteId(any())).thenReturn(suiteUUID);
+        when(runningContext.suiteExists(anyString())).thenReturn(false);
+
+        when(testPage.getFullPath()).thenReturn("test");
+        when(testPage.getName()).thenReturn(testPageName);
+        when(testPage.getData()).thenReturn(testPageData);
+        when(testPage.getSourcePage()).thenReturn(wikiPage);
+        when(wikiPage.getParent()).thenReturn(wikiPage);
+        when(wikiPage.getName()).thenReturn(sourcePageName);
+        when(testPageData.getAttribute(anyString())).thenReturn("Suites");
+
+        orangebeardTestSystemListener.testStarted(testPage);
+
+        verify(orangebeardClient, times(1)).startTest(any());
+
+        String[] suites = fullSuiteName.split("\\.");
+        verify(orangebeardClient, times(suites.length)).startSuite(any());
+        verify(runningContext, times(suites.length)).addSuite(anyString(), any(UUID.class));
     }
 
     @Test
     public void when_a_test_is_started_related_scenario_libraries_are_logged_on_debug_level() {
+        UUID suiteUUID = UUID.randomUUID();
+        UUID testRunUUID = UUID.randomUUID();
+
         when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)).thenReturn(true);
-        WikiPage scenarioLibrary = mock(WikiPage.class);
-        when(scenarioLibrary.getHtml()).thenReturn("<table class=\"error\">\u0000</table>");
+        when(wikiPage.getHtml()).thenReturn("<table class=\"error\">\u0000</table>");
+        when(testPage.getScenarioLibraries()).thenReturn(List.of(wikiPage));
+
+        mockStatic(TestPageHelper.class);
+        when(TestPageHelper.getFullSuiteName(any(TestPage.class))).thenReturn(fullSuiteName);
+
+        when(runningContext.getTestRunUUID()).thenReturn(testRunUUID);
+        when(runningContext.getSuiteId(any())).thenReturn(suiteUUID);
+        when(runningContext.suiteExists(anyString())).thenReturn(true);
 
         when(testPage.getFullPath()).thenReturn("test");
-        when(testPage.getName()).thenReturn("test");
-        when(runningContext.getSuiteId(any())).thenReturn(UUID.fromString("f07908f8-70c4-4c10-ae27-771a8372a0ef"));
-        when(testPage.getData()).thenReturn(mock(PageData.class));
-
-        when(testPage.getScenarioLibraries()).thenReturn(List.of(scenarioLibrary));
+        when(testPage.getName()).thenReturn(testPageName);
+        when(testPage.getData()).thenReturn(testPageData);
+        when(testPage.getSourcePage()).thenReturn(wikiPage);
+        when(wikiPage.getParent()).thenReturn(wikiPage);
+        when(wikiPage.getName()).thenReturn(sourcePageName);
+        when(testPageData.getAttribute(anyString())).thenReturn("Suites");
 
         orangebeardTestSystemListener.testStarted(testPage);
 
@@ -205,15 +346,26 @@ public class OrangebeardTestSystemListenerTest {
 
     @Test
     public void when_the_log_level_is_above_debug_scenario_libraries_are_not_logged() {
+        UUID suiteUUID = UUID.randomUUID();
+        UUID testRunUUID = UUID.randomUUID();
+
+        mockStatic(TestPageHelper.class);
+        when(TestPageHelper.getFullSuiteName(any(TestPage.class))).thenReturn(fullSuiteName);
+
         when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)).thenReturn(false);
-        WikiPage scenarioLibrary = mock(WikiPage.class);
+        when(testPage.getScenarioLibraries()).thenReturn(List.of(wikiPage));
+
+        when(runningContext.getTestRunUUID()).thenReturn(testRunUUID);
+        when(runningContext.getSuiteId(any())).thenReturn(suiteUUID);
+        when(runningContext.suiteExists(anyString())).thenReturn(true);
 
         when(testPage.getFullPath()).thenReturn("test");
-        when(testPage.getName()).thenReturn("test");
-        when(runningContext.getSuiteId(any())).thenReturn(UUID.fromString("f07908f8-70c4-4c10-ae27-771a8372a0ef"));
-        when(testPage.getData()).thenReturn(mock(PageData.class));
-
-        when(testPage.getScenarioLibraries()).thenReturn(List.of(scenarioLibrary));
+        when(testPage.getName()).thenReturn(testPageName);
+        when(testPage.getData()).thenReturn(testPageData);
+        when(testPage.getSourcePage()).thenReturn(wikiPage);
+        when(wikiPage.getParent()).thenReturn(wikiPage);
+        when(wikiPage.getName()).thenReturn(sourcePageName);
+        when(testPageData.getAttribute(anyString())).thenReturn("Suites");
 
         orangebeardTestSystemListener.testStarted(testPage);
 

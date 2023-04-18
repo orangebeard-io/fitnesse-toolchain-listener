@@ -1,8 +1,6 @@
 package io.orangebeard.listener.helper;
 
 import org.junit.Test;
-
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,7 +13,7 @@ public class ToolchainRunningContextTest {
         UUID suiteId = UUID.fromString("77d58d71-babf-4038-bded-f2a618383b51");
         ToolchainRunningContext toolchainRunningContext = new ToolchainRunningContext(UUID.randomUUID());
 
-        toolchainRunningContext.addSuite(suiteName, suiteId, LocalDateTime.now());
+        toolchainRunningContext.addSuite(suiteName, suiteId);
 
         assertThat(toolchainRunningContext.getSuiteId(suiteName)).isEqualTo(suiteId);
     }

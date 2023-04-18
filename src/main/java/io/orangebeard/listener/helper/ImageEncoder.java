@@ -13,6 +13,10 @@ import static java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC;
 
 public class ImageEncoder {
 
+    private ImageEncoder() {
+        throw new IllegalStateException("Class has only static methods.");
+    }
+
     public static String encodeForEmbedding(File file) throws IOException {
         BufferedImage imageToEncode = resizeImage(ImageIO.read(file), 300, -1);
         ByteArrayOutputStream imageOutputStream = new ByteArrayOutputStream();

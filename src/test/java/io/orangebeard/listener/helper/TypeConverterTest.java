@@ -1,9 +1,8 @@
 package io.orangebeard.listener.helper;
 
 import io.orangebeard.client.entity.Attribute;
-import io.orangebeard.client.entity.TestItemType;
-
 import java.util.Set;
+import io.orangebeard.client.entity.test.TestType;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,16 +28,16 @@ public class TypeConverterTest {
     }
 
     @Test
-    public void suitesetup_is_a_before_suite() {
-        TestItemType result = TypeConverter.determinePageType("SuiteSetUp");
+    public void suite_setup_is_a_before_suite() {
+        TestType result = TypeConverter.determinePageType("SuiteSetUp");
 
-        assertThat(result).isEqualTo(TestItemType.BEFORE_SUITE);
+        assertThat(result).isEqualTo(TestType.BEFORE);
     }
 
     @Test
-    public void suiteteardown_is_an_after_suite() {
-        TestItemType result = TypeConverter.determinePageType("SuiteTearDown");
+    public void suite_teardown_is_an_after_suite() {
+        TestType result = TypeConverter.determinePageType("SuiteTearDown");
 
-        assertThat(result).isEqualTo(TestItemType.AFTER_SUITE);
+        assertThat(result).isEqualTo(TestType.AFTER);
     }
 }

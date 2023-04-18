@@ -1,26 +1,29 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.OrangebeardClient;
-import io.orangebeard.client.entity.Attachment;
-import io.orangebeard.client.entity.LogLevel;
+import io.orangebeard.client.OrangebeardV3Client;
+
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import net.lingala.zip4j.ZipFile;
-import org.slf4j.LoggerFactory;
 
+import io.orangebeard.client.entity.attachment.Attachment;
+
+import lombok.extern.slf4j.Slf4j;
+import net.lingala.zip4j.ZipFile;
+
+@Slf4j
 public class AttachmentHandler {
     private static final Pattern attachmentPattern = Pattern.compile("href=\"([^$<>\"]*)\"");
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(AttachmentHandler.class);
-    private final OrangebeardClient orangebeardClient;
+    private final OrangebeardV3Client orangebeardClient;
     private final String rootPath;
 
-    public AttachmentHandler(OrangebeardClient orangebeardClient, String rootPath) {
+    public AttachmentHandler(OrangebeardV3Client orangebeardClient, String rootPath) {
         this.orangebeardClient = orangebeardClient;
         this.rootPath = rootPath;
     }
@@ -30,7 +33,7 @@ public class AttachmentHandler {
         return attachments.find();
     }
 
-    public void attachFilesIfPresent(UUID testId, UUID testRunId, String message) {
+    public void attachFilesIfPresent(UUID testId, UUID testRunId, String message, UUID logUUID) {
         Matcher attachments = attachmentPattern.matcher(message);
         while (attachments.find()) {
             if (!attachments.group(1).startsWith("http://") &&
@@ -38,19 +41,20 @@ public class AttachmentHandler {
                     !attachments.group(1).startsWith("mailto:")) {
                 try {
                     File attachmentFile = new File(rootPath, attachments.group(1));
-                    String fileName = attachmentFile.getName();
-                    Attachment attachment = Attachment.builder()
-                            .file(new Attachment.File(attachmentFile))
-                            .message(fileName)
-                            .logLevel(LogLevel.debug)
-                            .itemUuid(testId)
-                            .testRunUUID(testRunId)
-                            .time(LocalDateTime.now())
-                            .build();
+
+                    Attachment.AttachmentFile file = new Attachment.AttachmentFile(
+                            attachmentFile.getName(),
+                            Files.readAllBytes(attachmentFile.toPath()),
+                            Files.probeContentType(attachmentFile.toPath())
+                    );
+                    Attachment.AttachmentMetaData metaData = new Attachment.AttachmentMetaData(
+                            testRunId, testId, UUID.randomUUID(), logUUID, ZonedDateTime.now()
+                    );
+                    Attachment attachment = new Attachment(file, metaData);
 
                     orangebeardClient.sendAttachment(attachment);
                 } catch (IOException | InvalidPathException e) {
-                    logger.info("Unable to read attachment file for: " + attachments.group(1));
+                    log.info("Unable to read attachment file for: {}", attachments.group(1));
                 }
             }
         }
@@ -59,22 +63,29 @@ public class AttachmentHandler {
     public void attachFitNesseResultsToRun(UUID testRunId) {
         try {
             ZipFile testReportBundle = new ZipFile("FitNesseResults.zip");
+            try (testReportBundle) {
+                log.info("Zip file is created");
+            } catch (IllegalArgumentException e) {
+                log.error(e.getMessage());
+            }
             testReportBundle.addFolder(new File(rootPath));
             File reportZip = testReportBundle.getFile();
-            logger.info("Attaching result zip");
 
-            Attachment attachment = Attachment.builder()
-                    .file(new Attachment.File(reportZip))
-                    .message("FitNesse-results.zip")
-                    .logLevel(LogLevel.info)
-                    .itemUuid(null)
-                    .testRunUUID(testRunId)
-                    .time(LocalDateTime.now())
-                    .build();
+            log.info("Attaching result zip");
+
+            Attachment.AttachmentFile file = new Attachment.AttachmentFile(
+                    reportZip.getName(),
+                    Files.readAllBytes(reportZip.toPath()),
+                    Files.probeContentType(reportZip.toPath())
+            );
+            Attachment.AttachmentMetaData metaData = new Attachment.AttachmentMetaData(
+                    testRunId, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), ZonedDateTime.now()
+            );
+            Attachment attachment = new Attachment(file, metaData);
 
             orangebeardClient.sendAttachment(attachment);
         } catch (IOException e) {
-            logger.warn("An exception occurred when attempting to attach the html report to the launch", e);
+            log.warn("An exception occurred when attempting to attach the html report to the launch", e);
         }
     }
 }
