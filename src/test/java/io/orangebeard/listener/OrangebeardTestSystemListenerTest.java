@@ -278,7 +278,7 @@ public class OrangebeardTestSystemListenerTest {
 
         verify(orangebeardClient, times(1)).startTest(any());
         verify(orangebeardClient, times(0)).startSuite(any());
-        verify(runningContext, times(0)).addSuite(anyString(), any(UUID.class));
+        verify(runningContext, times(0)).addSuite(anyString(), any(UUID.class), any(UUID.class), any());
     }
 
     @Test
@@ -307,7 +307,7 @@ public class OrangebeardTestSystemListenerTest {
 
         String[] suites = fullSuiteName.split("\\.");
         verify(orangebeardClient, times(suites.length)).startSuite(any());
-        verify(runningContext, times(suites.length)).addSuite(anyString(), any(UUID.class));
+        verify(runningContext, times(suites.length)).addSuite(anyString(), any(UUID.class), any(UUID.class), any());
     }
 
     @Test

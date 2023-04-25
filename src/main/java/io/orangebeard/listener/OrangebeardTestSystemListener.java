@@ -219,7 +219,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             if (!runContext.suiteExists(suitePath)) {
                 StartSuite startSuite = new StartSuite(testRunUUID, parentSuiteId, description, attributes, List.of(suites));
                 orangebeardClient.startSuite(startSuite);
-                runContext.addSuite(suitePath, UUID.randomUUID());
+                runContext.addSuite(suitePath, UUID.randomUUID(), parentSuiteId, suites);
             }
         }
 
@@ -340,7 +340,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 //        suites.sort(Comparator.comparing(Suite::getStartTime).reversed());
 
         for (Suite suite : suites) {
-            stopSuite(suite.getUuid());
+            stopSuite(suite.getSuiteUUID());
         }
     }
 

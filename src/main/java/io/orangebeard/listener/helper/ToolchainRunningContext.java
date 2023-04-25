@@ -47,7 +47,7 @@ public class ToolchainRunningContext {
 
     public UUID getSuiteId(String fullSuiteName) {
         if (suites.containsKey(fullSuiteName)) {
-            return suites.get(fullSuiteName).getUuid();
+            return suites.get(fullSuiteName).getSuiteUUID();
         }
         return null;
     }
@@ -56,8 +56,8 @@ public class ToolchainRunningContext {
         return suites.containsKey(suiteName);
     }
 
-    public void addSuite(String fullSuiteName, UUID suiteId) {
-        suites.put(fullSuiteName, new Suite(suiteId));
+    public void addSuite(String suiteName, UUID suiteId, UUID parentSuiteId, String[] fullSuiteName) {
+        suites.put(suiteName, new Suite(suiteId, parentSuiteId, suiteName, List.of(fullSuiteName)));
     }
 
     public List<Suite> getAllSuites() {
