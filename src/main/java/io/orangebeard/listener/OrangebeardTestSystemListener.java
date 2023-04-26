@@ -187,8 +187,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     @Override
     public void testStarted(TestPage testPage) {
-        StartTest startTest = getStartTest(testPage);
-
         // Get the full suite name here, so we can split the full suite string in separate suites and iterate
         // to check if the suite is already in the run context or not.
         String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
@@ -196,34 +194,38 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         String suitePath = "";
 
         UUID parentSuiteId = runContext.getSuiteId(suitePath);
+        UUID suiteId = null;
         UUID testRunUUID = runContext.getTestRunUUID();
 
         for (String suite : suites) {
             suitePath = format("%s.%s", suitePath, suite);
 
-            String description = "";
-            Set<Attribute> attributes = Collections.emptySet();
-
-            WikiTestPage wikiTestPage = (WikiTestPage) testPage;
-            PageData suitePageData = getPageDataForSuite(suitePath, wikiTestPage.getSourcePage());
-
-            if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
-                attributes = convertAttributes(suitePageData.getAttribute(WikiPageProperty.SUITES));
-            }
-            if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.HELP) != null) {
-                description = suitePageData.getAttribute(WikiPageProperty.HELP);
-            }
-
             // If the suite doesn't exist in the context map it means that the test is included in a new suite
             // and the latter needs to be started as well
             if (!runContext.suiteExists(suitePath)) {
+                String description = "";
+                Set<Attribute> attributes = Collections.emptySet();
+
+                WikiTestPage wikiTestPage = (WikiTestPage) testPage;
+                PageData suitePageData = getPageDataForSuite(suitePath, wikiTestPage.getSourcePage());
+
+                if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
+                    attributes = convertAttributes(suitePageData.getAttribute(WikiPageProperty.SUITES));
+                }
+                if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.HELP) != null) {
+                    description = suitePageData.getAttribute(WikiPageProperty.HELP);
+                }
                 StartSuite startSuite = new StartSuite(testRunUUID, parentSuiteId, description, attributes, List.of(suites));
                 orangebeardClient.startSuite(startSuite);
-                runContext.addSuite(suitePath, UUID.randomUUID(), parentSuiteId, suites);
+                suiteId = UUID.randomUUID();
+                runContext.addSuite(suitePath, suiteId, parentSuiteId, suites);
+            } else {
+                suiteId = runContext.getSuiteId(suitePath);
             }
         }
 
         // Start the test here
+        StartTest startTest = getStartTest(suiteId, testPage);
         UUID testId = orangebeardClient.startTest(startTest);
         runContext.addTest(getTestName(testPage), testId);
 
@@ -377,9 +379,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return fitnesseRootPath;
     }
 
-    private StartTest getStartTest(TestPage testPage) {
+    private StartTest getStartTest(UUID suiteId, TestPage testPage) {
         StartTest.StartTestBuilder startTest = StartTest.builder()
                 .testRunUUID(runContext.getTestRunUUID())
+                .suiteUUID(suiteId)
                 .startTime(ZonedDateTime.now())
                 .testName(getTestName(testPage))
                 .testType(determinePageType(testPage.getName()));
