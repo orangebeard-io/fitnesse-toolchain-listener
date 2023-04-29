@@ -2,7 +2,6 @@ package io.orangebeard.listener.helper;
 
 import io.orangebeard.client.entity.suite.Suite;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -58,10 +57,6 @@ public class ToolchainRunningContext {
 
     public void addSuite(String suiteName, UUID suiteId, UUID parentSuiteId, String[] fullSuiteName) {
         suites.put(suiteName, new Suite(suiteId, parentSuiteId, suiteName, List.of(fullSuiteName)));
-    }
-
-    public List<Suite> getAllSuites() {
-        return new ArrayList<>(suites.values());
     }
 }
 

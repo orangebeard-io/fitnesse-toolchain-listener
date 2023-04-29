@@ -1,7 +1,7 @@
 package io.orangebeard.listener.responders.run;
 
 import io.orangebeard.client.OrangebeardProperties;
-import io.orangebeard.client.entity.LogLevel;
+import io.orangebeard.client.entity.log.LogLevel;
 import io.orangebeard.listener.OrangebeardTestSystemListener;
 import io.orangebeard.listener.helper.OrangebeardPropertyHelper;
 
@@ -29,7 +29,7 @@ public class OrangebeardEnabledTestResponder extends fitnesse.responders.run.Tes
                 request.getResource(),
                 "Single test executed from wiki",
                 OrangebeardPropertyHelper.getAttributesFromQueryString(request.getQueryString()),
-                OrangebeardPropertyHelper.getlogLevelFromStringOrElse(fitNesseProperties.getProperty(LOG_LEVEL.getPropertyName()), LogLevel.debug),
+                OrangebeardPropertyHelper.getlogLevelFromStringOrElse(fitNesseProperties.getProperty(LOG_LEVEL.getPropertyName()), LogLevel.DEBUG),
                 Boolean.parseBoolean(fitNesseProperties.getProperty(LOGS_AT_END_OF_TEST.getPropertyName())));
 
         orangebeardListener = new OrangebeardTestSystemListener(orangebeardProperties);

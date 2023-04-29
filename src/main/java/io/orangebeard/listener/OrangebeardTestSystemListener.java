@@ -3,13 +3,12 @@ package io.orangebeard.listener;
 import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.OrangebeardV3Client;
 import io.orangebeard.client.entity.Attribute;
-import io.orangebeard.client.entity.FinishTestRun;
+import io.orangebeard.client.entity.FinishV3TestRun;
 import io.orangebeard.client.entity.LogFormat;
-import io.orangebeard.client.entity.LogLevel;
-import io.orangebeard.client.entity.StartTestRun;
+import io.orangebeard.client.entity.log.LogLevel;
+import io.orangebeard.client.entity.StartV3TestRun;
 import io.orangebeard.client.entity.log.Log;
 import io.orangebeard.client.entity.suite.StartSuite;
-import io.orangebeard.client.entity.suite.Suite;
 import io.orangebeard.client.entity.test.FinishTest;
 import io.orangebeard.client.entity.test.StartTest;
 import io.orangebeard.listener.entity.ScenarioLibraries;
@@ -141,7 +140,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             orangebeardClient.startAnnouncedTestRun(testRunUUID);
             this.runContext = new ToolchainRunningContext(testRunUUID);
         } else {
-            StartTestRun testRun = new StartTestRun(orangebeardProperties.getTestSetName(), orangebeardProperties.getDescription(), getTestRunAttributes(testSystem.getName()), ChangedComponentsHelper.getChangedComponents());
+            StartV3TestRun testRun = new StartV3TestRun(orangebeardProperties.getTestSetName(), orangebeardProperties.getDescription(), getTestRunAttributes(testSystem.getName()), ChangedComponentsHelper.getChangedComponents());
             this.runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testRun));
         }
     }
@@ -182,11 +181,14 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         if (logMessage.toLowerCase().contains("<table")) {
             return OrangebeardTableLogParser.getLogLevel(logMessage);
         }
-        return LogLevel.debug;
+        return LogLevel.DEBUG;
     }
 
     @Override
     public void testStarted(TestPage testPage) {
+        StartTest partialTest = getStartTest(testPage);
+        UUID suiteId = null;
+
         // Get the full suite name here, so we can split the full suite string in separate suites and iterate
         // to check if the suite is already in the run context or not.
         String fullSuiteName = TestPageHelper.getFullSuiteName(testPage);
@@ -194,7 +196,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         String suitePath = "";
 
         UUID parentSuiteId = runContext.getSuiteId(suitePath);
-        UUID suiteId = null;
         UUID testRunUUID = runContext.getTestRunUUID();
 
         for (String suite : suites) {
@@ -225,7 +226,15 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         }
 
         // Start the test here
-        StartTest startTest = getStartTest(suiteId, testPage);
+        StartTest startTest = StartTest.builder()
+                .testRunUUID(partialTest.getTestRunUUID())
+                .suiteUUID(suiteId)
+                .testName(partialTest.getTestName())
+                .testType(partialTest.getTestType())
+                .startTime(partialTest.getStartTime())
+                .attributes(partialTest.getAttributes())
+                .description(partialTest.getDescription())
+                .build();
         UUID testId = orangebeardClient.startTest(startTest);
         runContext.addTest(getTestName(testPage), testId);
 
@@ -250,7 +259,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     }
 
     private void logScenarioLibraries(UUID testUUID, List<WikiPage> scenarioLibraries) {
-        if (orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)) {
+        if (orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.DEBUG)) {
 
             for (WikiPage scenarioLibrary : scenarioLibraries) {
                 String log = scenarioLibrary.getHtml();
@@ -264,7 +273,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                 Log logItem = Log.builder().message(enrichedLog)
                         .testUUID(testUUID)
                         .testRunUUID(runContext.getTestRunUUID())
-                        .logLevel(LogLevel.debug)
+                        .logLevel(LogLevel.DEBUG)
                         .logTime(ZonedDateTime.now())
                         .logFormat(LogFormat.HTML)
                         .build();
@@ -286,8 +295,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     public void testSystemStopped(TestSystem testSystem, Throwable throwable) {
         logger.info("Number of log requests: {}", numberOfLogRequests);
         numberOfLogRequests = 0;
-        stopAllSuites();
-        orangebeardClient.finishTestRun(runContext.getTestRunUUID(), new FinishTestRun());
+        orangebeardClient.finishTestRun(runContext.getTestRunUUID(), new FinishV3TestRun());
         reset();
     }
 
@@ -334,23 +342,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
             return null;
         }
     }
-
-    private void stopAllSuites() {
-        List<Suite> suites = runContext.getAllSuites();
-        // reverse suite ids so suites are stopped in the reverse order of which these are started.
-        // TODO check if sorting should be performed
-//        suites.sort(Comparator.comparing(Suite::getStartTime).reversed());
-
-        for (Suite suite : suites) {
-            stopSuite(suite.getSuiteUUID());
-        }
-    }
-
-    private void stopSuite(UUID suiteId) {
-        FinishTest test = new FinishTest(runContext.getTestRunUUID(), null, null);
-        orangebeardClient.finishTest(suiteId, test);
-    }
-
     @SneakyThrows
     private Set<Attribute> getTestRunAttributes(String testSystemName) {
         Set<Attribute> tags = new HashSet<>(orangebeardProperties.getAttributes());
@@ -379,10 +370,9 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return fitnesseRootPath;
     }
 
-    private StartTest getStartTest(UUID suiteId, TestPage testPage) {
+    private StartTest getStartTest(TestPage testPage) {
         StartTest.StartTestBuilder startTest = StartTest.builder()
                 .testRunUUID(runContext.getTestRunUUID())
-                .suiteUUID(suiteId)
                 .startTime(ZonedDateTime.now())
                 .testName(getTestName(testPage))
                 .testType(determinePageType(testPage.getName()));

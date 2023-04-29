@@ -2,7 +2,7 @@ package io.orangebeard.listener.helper;
 
 import io.orangebeard.client.OrangebeardV3Client;
 import io.orangebeard.client.entity.log.Log;
-import io.orangebeard.client.entity.LogLevel;
+import io.orangebeard.client.entity.log.LogLevel;
 
 import java.util.UUID;
 import org.mockito.ArgumentCaptor;
@@ -25,7 +25,7 @@ public class LogStasherTest {
     @Test
     public void logs_can_be_stashed_and_then_sent() {
         UUID testId = UUID.randomUUID();
-        Log testLog = Log.builder().logLevel(LogLevel.error).build();
+        Log testLog = Log.builder().logLevel(LogLevel.ERROR).build();
 
         logStasher.stashLogItem(testId, testLog);
         logStasher.sendLogs(testId);
