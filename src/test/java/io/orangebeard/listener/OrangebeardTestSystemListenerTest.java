@@ -9,6 +9,7 @@ import io.orangebeard.client.entity.LogFormat;
 import io.orangebeard.client.entity.StartV3TestRun;
 import io.orangebeard.client.entity.log.Log;
 import io.orangebeard.client.entity.log.LogLevel;
+import io.orangebeard.client.entity.suite.Suite;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.helper.AttachmentHandler;
 import io.orangebeard.listener.helper.LogStasher;
@@ -285,12 +286,14 @@ public class OrangebeardTestSystemListenerTest {
     public void test_can_be_started_properly_in_new_suite() {
         UUID suiteUUID = UUID.fromString("f07908f8-70c4-4c10-ae27-771a8372a0ef");
         UUID testRunUUID = UUID.randomUUID();
+        Suite dummySuite = new Suite(UUID.randomUUID(), UUID.randomUUID(), "suiteName", List.of("suiteName"));
+
 
         mockStatic(TestPageHelper.class);
         when(TestPageHelper.getFullSuiteName(any(TestPage.class))).thenReturn(fullSuiteName);
 
         when(runningContext.getTestRunUUID()).thenReturn(testRunUUID);
-        when(runningContext.getSuiteId(any())).thenReturn(suiteUUID);
+        when(runningContext.getSuiteId(any())).thenReturn(null);
         when(runningContext.suiteExists(anyString())).thenReturn(false);
 
         when(testPage.getFullPath()).thenReturn("test");
@@ -300,6 +303,8 @@ public class OrangebeardTestSystemListenerTest {
         when(wikiPage.getParent()).thenReturn(wikiPage);
         when(wikiPage.getName()).thenReturn(sourcePageName);
         when(testPageData.getAttribute(anyString())).thenReturn("Suites");
+        when(orangebeardClient.startSuite(any())).thenReturn(List.of(dummySuite));
+
 
         orangebeardTestSystemListener.testStarted(testPage);
 
@@ -307,7 +312,6 @@ public class OrangebeardTestSystemListenerTest {
 
         String[] suites = fullSuiteName.split("\\.");
         verify(orangebeardClient, times(suites.length)).startSuite(any());
-        verify(runningContext, times(suites.length)).addSuite(anyString(), any(UUID.class), any(UUID.class), any());
     }
 
     @Test

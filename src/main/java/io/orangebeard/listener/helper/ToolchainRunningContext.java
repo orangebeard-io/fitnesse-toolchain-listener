@@ -58,5 +58,9 @@ public class ToolchainRunningContext {
     public void addSuite(String suiteName, UUID suiteId, UUID parentSuiteId, String[] fullSuiteName) {
         suites.put(suiteName, new Suite(suiteId, parentSuiteId, suiteName, List.of(fullSuiteName)));
     }
+
+    public void addSuite(String suitePath, Suite suite) {
+        suites.put(suitePath, suite);
+    }
 }
 

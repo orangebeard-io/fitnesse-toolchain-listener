@@ -4,6 +4,7 @@ import io.orangebeard.client.OrangebeardV3Client;
 import io.orangebeard.client.entity.log.Log;
 import io.orangebeard.client.entity.log.LogLevel;
 
+import java.util.List;
 import java.util.UUID;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -30,8 +31,8 @@ public class LogStasherTest {
         logStasher.stashLogItem(testId, testLog);
         logStasher.sendLogs(testId);
 
-        ArgumentCaptor<Log> argumentCaptor = ArgumentCaptor.forClass(Log.class);
-        verify(orangebeardClient).log(argumentCaptor.capture());
-        assertThat(argumentCaptor.getValue()).isEqualTo(testLog);
+        ArgumentCaptor<List<Log>> argumentCaptor = ArgumentCaptor.forClass(List.class);
+        verify(orangebeardClient).sendLogBatch(argumentCaptor.capture());
+        assertThat(argumentCaptor.getValue()).isEqualTo(List.of(testLog));
     }
 }
