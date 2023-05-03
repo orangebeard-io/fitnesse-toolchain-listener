@@ -48,7 +48,7 @@ public class AttachmentHandler {
                             Files.probeContentType(attachmentFile.toPath())
                     );
                     Attachment.AttachmentMetaData metaData = new Attachment.AttachmentMetaData(
-                            testRunId, testId, UUID.randomUUID(), logUUID, ZonedDateTime.now()
+                            testRunId, testId, null, logUUID, ZonedDateTime.now()
                     );
                     Attachment attachment = new Attachment(file, metaData);
 

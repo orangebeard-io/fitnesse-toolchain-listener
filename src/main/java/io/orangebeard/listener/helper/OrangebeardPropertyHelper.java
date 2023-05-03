@@ -1,7 +1,7 @@
 package io.orangebeard.listener.helper;
 
 import io.orangebeard.client.entity.Attribute;
-import io.orangebeard.client.entity.LogLevel;
+import io.orangebeard.client.entity.log.LogLevel;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -9,7 +9,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static fitnesse.http.Request.decodeContent;
-import static io.orangebeard.client.OrangebeardProperty.LOG_LEVEL;
 
 public class OrangebeardPropertyHelper {
     private static final Pattern queryStringPattern = Pattern.compile("([^=&]*)=?([^&]*)&?");

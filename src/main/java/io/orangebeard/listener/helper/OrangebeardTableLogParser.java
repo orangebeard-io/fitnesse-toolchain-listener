@@ -1,11 +1,12 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.entity.LogLevel;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import io.orangebeard.client.entity.log.LogLevel;
+
 import org.slf4j.LoggerFactory;
 
 public class OrangebeardTableLogParser {
@@ -27,7 +28,6 @@ public class OrangebeardTableLogParser {
         //Workaround for corner case where table contains binary representation with 0x00 unicode chars
         return enrichedLog.replace("\u0000", "");
     }
-
 
     public static String embedImagesAndStripHyperlinks(String html, String rootPath) {
         Pattern imgPattern = Pattern.compile("(<img(\\s+.*?)?\\s+src=\"(.*?)\".*?/>)", Pattern.CASE_INSENSITIVE);
@@ -55,11 +55,11 @@ public class OrangebeardTableLogParser {
     }
 
     public static LogLevel getLogLevel(String logChunk) {
-        LogLevel level = LogLevel.debug;
+        io.orangebeard.client.entity.log.LogLevel level = io.orangebeard.client.entity.log.LogLevel.DEBUG;
         if (logChunk.contains("class=\"error\"") || logChunk.contains("class=\"fail\"")) {
-            level = LogLevel.error;
+            level = io.orangebeard.client.entity.log.LogLevel.ERROR;
         } else if (reportTable(logChunk)) {
-            level = LogLevel.info;
+            level = io.orangebeard.client.entity.log.LogLevel.INFO;
         }
         return level;
     }

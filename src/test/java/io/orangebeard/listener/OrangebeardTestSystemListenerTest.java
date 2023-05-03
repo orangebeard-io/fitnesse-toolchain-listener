@@ -6,9 +6,10 @@ import io.orangebeard.client.OrangebeardProperties;
 import io.orangebeard.client.OrangebeardV3Client;
 import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.LogFormat;
-import io.orangebeard.client.entity.LogLevel;
-import io.orangebeard.client.entity.StartTestRun;
+import io.orangebeard.client.entity.StartV3TestRun;
 import io.orangebeard.client.entity.log.Log;
+import io.orangebeard.client.entity.log.LogLevel;
+import io.orangebeard.client.entity.suite.Suite;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.helper.AttachmentHandler;
 import io.orangebeard.listener.helper.LogStasher;
@@ -72,7 +73,7 @@ public class OrangebeardTestSystemListenerTest {
     private OrangebeardTestSystemListener orangebeardTestSystemListener;
 
     private ArgumentCaptor<UUID> uuidArgumentCaptor;
-    private ArgumentCaptor<StartTestRun> startTestRunArgumentCaptor;
+    private ArgumentCaptor<StartV3TestRun> startTestRunArgumentCaptor;
     private String testSetName;
     private String description;
     private TestSystem testSystem;
@@ -85,7 +86,7 @@ public class OrangebeardTestSystemListenerTest {
     public void setup() {
         testSystem = mock(TestSystem.class);
         uuidArgumentCaptor = ArgumentCaptor.forClass(UUID.class);
-        startTestRunArgumentCaptor = ArgumentCaptor.forClass(StartTestRun.class);
+        startTestRunArgumentCaptor = ArgumentCaptor.forClass(StartV3TestRun.class);
         testSetName = "testSetName";
         description = "desc";
         attributes = Set.of(new Attribute("key", "value"));
@@ -136,7 +137,7 @@ public class OrangebeardTestSystemListenerTest {
         orangebeardTestSystemListener.testSystemStarted(testSystem);
 
         verify(orangebeardClient, times(1)).startTestRun(startTestRunArgumentCaptor.capture());
-        assertThat(startTestRunArgumentCaptor.getValue().getName()).isEqualTo(testSetName);
+        assertThat(startTestRunArgumentCaptor.getValue().getTestSetName()).isEqualTo(testSetName);
         assertThat(startTestRunArgumentCaptor.getValue().getDescription()).isEqualTo(description);
 
         // We want to verify here if the proper object of StartTestRun is passed to the running context
@@ -160,10 +161,10 @@ public class OrangebeardTestSystemListenerTest {
 
         orangebeardTestSystemListener.testSystemStarted(testSystem);
 
-        ArgumentCaptor<StartTestRun> argumentCaptor = ArgumentCaptor.forClass(StartTestRun.class);
+        ArgumentCaptor<StartV3TestRun> argumentCaptor = ArgumentCaptor.forClass(StartV3TestRun.class);
         verify(orangebeardClient).startTestRun(argumentCaptor.capture());
 
-        assertThat(argumentCaptor.getValue().getName()).isEqualTo(testSetName);
+        assertThat(argumentCaptor.getValue().getTestSetName()).isEqualTo(testSetName);
         assertThat(argumentCaptor.getValue().getDescription()).isEqualTo(description);
         assertThat(argumentCaptor.getValue().getStartTime()).isNotNull();
     }
@@ -176,7 +177,7 @@ public class OrangebeardTestSystemListenerTest {
         withEnvironmentVariable("orangebeard.changedComponents", "componentA, componentB").execute(() -> {
             orangebeardTestSystemListener.testSystemStarted(testSystem);
 
-            ArgumentCaptor<StartTestRun> argumentCaptor = ArgumentCaptor.forClass(StartTestRun.class);
+            ArgumentCaptor<StartV3TestRun> argumentCaptor = ArgumentCaptor.forClass(StartV3TestRun.class);
             verify(orangebeardClient).startTestRun(argumentCaptor.capture());
 
             Assertions.assertThat(argumentCaptor.getValue().getChangedComponents()).extracting("componentName").containsOnly("componentA", "componentB");
@@ -190,7 +191,7 @@ public class OrangebeardTestSystemListenerTest {
         UUID logUUID = UUID.randomUUID();
         String latestTestName = "test name";
 
-        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)).thenReturn(true);
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.DEBUG)).thenReturn(true);
         when(runningContext.getTestRunUUID()).thenReturn(testRunUUID);
         when(runningContext.getLatestTestName()).thenReturn(latestTestName);
         when(runningContext.getTestId(anyString())).thenReturn(testId);
@@ -221,20 +222,20 @@ public class OrangebeardTestSystemListenerTest {
 
     @Test
     public void when_a_table_is_logged_and_it_is_an_error_loglevel_becomes_error_and_log_format_is_html() {
-        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.error)).thenReturn(true);
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.ERROR)).thenReturn(true);
 
         orangebeardTestSystemListener.testOutputChunk(testPage, "<table class=\"error\"></table>");
 
         ArgumentCaptor<Log> argumentCaptor = ArgumentCaptor.forClass(Log.class);
         verify(orangebeardClient, times(1)).log(argumentCaptor.capture());
 
-        assertThat(argumentCaptor.getValue().getLogLevel()).isEqualTo(LogLevel.error);
+        assertThat(argumentCaptor.getValue().getLogLevel()).isEqualTo(LogLevel.ERROR);
         assertThat(argumentCaptor.getValue().getLogFormat()).isEqualTo(LogFormat.HTML);
     }
 
     @Test
     public void when_a_table_is_logged_and_it_is_an_warn_loglevel_it_is_not_sent_to_orangebeard_when_this_should_not_be_the_case() {
-        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.error)).thenReturn(false);
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.ERROR)).thenReturn(false);
 
         orangebeardTestSystemListener.testOutputChunk(testPage, "<table class=\"error\"></table>");
 
@@ -243,7 +244,7 @@ public class OrangebeardTestSystemListenerTest {
 
     @Test
     public void weird_characters_are_removed_from_the_log_and_orangebeard_styling_is_applied_on_tables() {
-        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.error)).thenReturn(true);
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.ERROR)).thenReturn(true);
 
         orangebeardTestSystemListener.testOutputChunk(testPage, "<table class=\"error\">\u0000</table>");
 
@@ -278,19 +279,21 @@ public class OrangebeardTestSystemListenerTest {
 
         verify(orangebeardClient, times(1)).startTest(any());
         verify(orangebeardClient, times(0)).startSuite(any());
-        verify(runningContext, times(0)).addSuite(anyString(), any(UUID.class));
+        verify(runningContext, times(0)).addSuite(anyString(), any(UUID.class), any(UUID.class), any());
     }
 
     @Test
     public void test_can_be_started_properly_in_new_suite() {
         UUID suiteUUID = UUID.fromString("f07908f8-70c4-4c10-ae27-771a8372a0ef");
         UUID testRunUUID = UUID.randomUUID();
+        Suite dummySuite = new Suite(UUID.randomUUID(), UUID.randomUUID(), "suiteName", List.of("suiteName"));
+
 
         mockStatic(TestPageHelper.class);
         when(TestPageHelper.getFullSuiteName(any(TestPage.class))).thenReturn(fullSuiteName);
 
         when(runningContext.getTestRunUUID()).thenReturn(testRunUUID);
-        when(runningContext.getSuiteId(any())).thenReturn(suiteUUID);
+        when(runningContext.getSuiteId(any())).thenReturn(null);
         when(runningContext.suiteExists(anyString())).thenReturn(false);
 
         when(testPage.getFullPath()).thenReturn("test");
@@ -300,6 +303,8 @@ public class OrangebeardTestSystemListenerTest {
         when(wikiPage.getParent()).thenReturn(wikiPage);
         when(wikiPage.getName()).thenReturn(sourcePageName);
         when(testPageData.getAttribute(anyString())).thenReturn("Suites");
+        when(orangebeardClient.startSuite(any())).thenReturn(List.of(dummySuite));
+
 
         orangebeardTestSystemListener.testStarted(testPage);
 
@@ -307,7 +312,6 @@ public class OrangebeardTestSystemListenerTest {
 
         String[] suites = fullSuiteName.split("\\.");
         verify(orangebeardClient, times(suites.length)).startSuite(any());
-        verify(runningContext, times(suites.length)).addSuite(anyString(), any(UUID.class));
     }
 
     @Test
@@ -315,7 +319,7 @@ public class OrangebeardTestSystemListenerTest {
         UUID suiteUUID = UUID.randomUUID();
         UUID testRunUUID = UUID.randomUUID();
 
-        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)).thenReturn(true);
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.DEBUG)).thenReturn(true);
         when(wikiPage.getHtml()).thenReturn("<table class=\"error\">\u0000</table>");
         when(testPage.getScenarioLibraries()).thenReturn(List.of(wikiPage));
 
@@ -340,7 +344,7 @@ public class OrangebeardTestSystemListenerTest {
 
         verify(orangebeardClient).log(argumentCaptor.capture());
 
-        assertThat(argumentCaptor.getValue().getLogLevel()).isEqualTo(LogLevel.debug);
+        assertThat(argumentCaptor.getValue().getLogLevel()).isEqualTo(LogLevel.DEBUG);
         assertThat(argumentCaptor.getValue().getMessage()).isEqualTo("<table style=\"background-color:#ffe67b; padding: 3px; border-radius: 3px;\"></table>");
     }
 
@@ -352,7 +356,7 @@ public class OrangebeardTestSystemListenerTest {
         mockStatic(TestPageHelper.class);
         when(TestPageHelper.getFullSuiteName(any(TestPage.class))).thenReturn(fullSuiteName);
 
-        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.debug)).thenReturn(false);
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.DEBUG)).thenReturn(false);
         when(testPage.getScenarioLibraries()).thenReturn(List.of(wikiPage));
 
         when(runningContext.getTestRunUUID()).thenReturn(testRunUUID);
@@ -376,7 +380,7 @@ public class OrangebeardTestSystemListenerTest {
     public void when_log_stashing_is_disabled_logs_are_sent_directly_and_not_stashed() {
         var testId = UUID.randomUUID();
 
-        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.error)).thenReturn(true);
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.ERROR)).thenReturn(true);
         when(orangebeardProperties.isLogsAtEndOfTest()).thenReturn(false);
 
         mockStatic(TestPageHelper.class);
@@ -397,7 +401,7 @@ public class OrangebeardTestSystemListenerTest {
     public void when_log_stashing_is_enabled_logs_are_stashed_and_sent_when_the_test_is_completed() {
         var testId = UUID.randomUUID();
 
-        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.error)).thenReturn(true);
+        when(orangebeardProperties.logShouldBeDispatchedToOrangebeard(LogLevel.ERROR)).thenReturn(true);
         when(orangebeardProperties.isLogsAtEndOfTest()).thenReturn(true);
 
         mockStatic(TestPageHelper.class);
