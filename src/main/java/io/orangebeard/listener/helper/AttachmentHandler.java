@@ -1,8 +1,5 @@
 package io.orangebeard.listener.helper;
 
-import io.orangebeard.client.OrangebeardV3Client;
-
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,16 +11,17 @@ import java.util.regex.Pattern;
 
 import io.orangebeard.client.entity.attachment.Attachment;
 
+import io.orangebeard.client.v3.OrangebeardAsyncV3Client;
+
 import lombok.extern.slf4j.Slf4j;
-import net.lingala.zip4j.ZipFile;
 
 @Slf4j
 public class AttachmentHandler {
     private static final Pattern attachmentPattern = Pattern.compile("href=\"([^$<>\"]*)\"");
-    private final OrangebeardV3Client orangebeardClient;
+    private final OrangebeardAsyncV3Client orangebeardClient;
     private final String rootPath;
 
-    public AttachmentHandler(OrangebeardV3Client orangebeardClient, String rootPath) {
+    public AttachmentHandler(OrangebeardAsyncV3Client orangebeardClient, String rootPath) {
         this.orangebeardClient = orangebeardClient;
         this.rootPath = rootPath;
     }
@@ -36,7 +34,7 @@ public class AttachmentHandler {
     public void attachFilesIfPresent(UUID testId, UUID testRunId, String message, UUID logUUID) {
         Matcher attachments = attachmentPattern.matcher(message);
         while (attachments.find()) {
-            if (!attachments.group(1).startsWith("http://") &&
+            if (!attachments.group(1).isEmpty() && !attachments.group(1).startsWith("http://") &&
                     !attachments.group(1).startsWith("https://") &&
                     !attachments.group(1).startsWith("mailto:")) {
                 try {
@@ -57,35 +55,6 @@ public class AttachmentHandler {
                     log.info("Unable to read attachment file for: {}", attachments.group(1));
                 }
             }
-        }
-    }
-
-    public void attachFitNesseResultsToRun(UUID testRunId) {
-        try {
-            ZipFile testReportBundle = new ZipFile("FitNesseResults.zip");
-            try (testReportBundle) {
-                log.info("Zip file is created");
-            } catch (IllegalArgumentException e) {
-                log.error(e.getMessage());
-            }
-            testReportBundle.addFolder(new File(rootPath));
-            File reportZip = testReportBundle.getFile();
-
-            log.info("Attaching result zip");
-
-            Attachment.AttachmentFile file = new Attachment.AttachmentFile(
-                    reportZip.getName(),
-                    Files.readAllBytes(reportZip.toPath()),
-                    Files.probeContentType(reportZip.toPath())
-            );
-            Attachment.AttachmentMetaData metaData = new Attachment.AttachmentMetaData(
-                    testRunId, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), ZonedDateTime.now()
-            );
-            Attachment attachment = new Attachment(file, metaData);
-
-            orangebeardClient.sendAttachment(attachment);
-        } catch (IOException e) {
-            log.warn("An exception occurred when attempting to attach the html report to the launch", e);
         }
     }
 }
