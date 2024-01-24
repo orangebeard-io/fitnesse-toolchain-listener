@@ -2,17 +2,18 @@ package io.orangebeard.listener.helper;
 
 import io.orangebeard.client.entity.suite.Suite;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Parallel execution context and set of operations to interact with it
  */
 public class ToolchainRunningContext {
     private final UUID testRun;
-    private final HashMap<String, UUID> tests = new HashMap<>();
-    private final HashMap<String, Suite> suites = new HashMap<>();
+    private final Map<String, UUID> tests = new ConcurrentHashMap<>();
+    private final Map<String, Suite> suites = new ConcurrentHashMap<>();
     private String latestTest;
 
     public ToolchainRunningContext(UUID testRunId) {

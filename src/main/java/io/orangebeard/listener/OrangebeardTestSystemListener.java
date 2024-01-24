@@ -1,7 +1,6 @@
 package io.orangebeard.listener;
 
 import io.orangebeard.client.OrangebeardProperties;
-import io.orangebeard.client.OrangebeardV3Client;
 import io.orangebeard.client.entity.Attribute;
 import io.orangebeard.client.entity.FinishV3TestRun;
 import io.orangebeard.client.entity.LogFormat;
@@ -12,6 +11,7 @@ import io.orangebeard.client.entity.suite.StartSuite;
 import io.orangebeard.client.entity.suite.Suite;
 import io.orangebeard.client.entity.test.FinishTest;
 import io.orangebeard.client.entity.test.StartTest;
+import io.orangebeard.client.v3.OrangebeardAsyncV3Client;
 import io.orangebeard.listener.entity.ScenarioLibraries;
 import io.orangebeard.listener.helper.AttachmentHandler;
 import io.orangebeard.listener.helper.LogStasher;
@@ -45,6 +45,7 @@ import fitnesse.testsystems.TestSystemListener;
 import fitnesse.wiki.PageData;
 import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPageProperty;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,18 +73,15 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     private final ScenarioLibraries scenarioLibraries;
     private final AttachmentHandler attachmentHandler;
     private final LogStasher logStasher;
-    private OrangebeardV3Client orangebeardClient;
+    private OrangebeardAsyncV3Client orangebeardClient;
 
-    public ToolchainRunningContext getRunContext() {
-        return runContext;
-    }
-
+    @Getter
     private ToolchainRunningContext runContext;
 
     /**
      * constructor for testing purposes
      */
-    OrangebeardTestSystemListener(OrangebeardProperties orangebeardProperties, ToolchainRunningContext runContext, OrangebeardV3Client orangebeardClient,
+    OrangebeardTestSystemListener(OrangebeardProperties orangebeardProperties, ToolchainRunningContext runContext, OrangebeardAsyncV3Client orangebeardClient,
                                   AttachmentHandler attachmentHandler, ScenarioLibraries scenarioLibraries, LogStasher logStasher) {
         this.orangebeardProperties = orangebeardProperties;
         this.runContext = runContext;
@@ -237,12 +235,12 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
                 //only start suites one-by-one to ensure attributes and descriptions to be sent
                 StartSuite startSuite = new StartSuite(testRunUUID, parentSuiteId, description, attributes, List.of(suite));
-                List<Suite> startedSuites = orangebeardClient.startSuite(startSuite);
+                List<UUID> startedSuites = orangebeardClient.startSuite(startSuite);
 
-                Suite startedSuite = startedSuites.get(0);
-                runContext.addSuite(suitePath, startedSuite);
+                UUID startedSuite = startedSuites.get(0);
+                runContext.addSuite(suitePath, new Suite(startedSuite, parentSuiteId, suite, List.of(suite)));
 
-                parentSuiteId = startedSuite.getSuiteUUID();
+                parentSuiteId = startedSuite;
             }
 
             suiteId = runContext.getSuiteId(suitePath);
@@ -333,17 +331,17 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     @Override
     public void testAssertionVerified(Assertion assertion, TestResult testResult) {
-        // TODO document why this method is empty
+        // Intentionally not implemented
     }
 
     @Override
     public void testExceptionOccurred(Assertion assertion, ExceptionResult exceptionResult) {
-        // TODO document why this method is empty
+        // Intentionally not implemented
     }
 
     @Override
     public void close() {
-        // TODO document why this method is empty
+        // Intentionally not implemented
     }
 
     /**
@@ -417,7 +415,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         return startTest.build();
     }
 
-    private static OrangebeardV3Client createOrangebeardV3Client(OrangebeardProperties orangebeardProperties) {
-        return new OrangebeardV3Client(orangebeardProperties.getEndpoint(), orangebeardProperties.getAccessToken(), orangebeardProperties.getProjectName(), true);
+    private static OrangebeardAsyncV3Client createOrangebeardV3Client(OrangebeardProperties orangebeardProperties) {
+        return new OrangebeardAsyncV3Client(orangebeardProperties.getEndpoint(), orangebeardProperties.getAccessToken(), orangebeardProperties.getProjectName(), true);
     }
 }

@@ -6,6 +6,9 @@ import io.orangebeard.client.entity.log.LogLevel;
 
 import java.util.List;
 import java.util.UUID;
+
+import io.orangebeard.client.v3.OrangebeardAsyncV3Client;
+
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -19,7 +22,7 @@ import static org.mockito.Mockito.verify;
 @RunWith(MockitoJUnitRunner.class)
 public class LogStasherTest {
     @Mock
-    private OrangebeardV3Client orangebeardClient;
+    private OrangebeardAsyncV3Client orangebeardClient;
     @InjectMocks
     private LogStasher logStasher;
 

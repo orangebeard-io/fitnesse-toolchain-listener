@@ -2,6 +2,7 @@ package io.orangebeard.listener;
 
 import io.orangebeard.client.OrangebeardV3Client;
 import io.orangebeard.client.entity.attachment.Attachment;
+import io.orangebeard.client.v3.OrangebeardAsyncV3Client;
 import io.orangebeard.listener.helper.AttachmentHandler;
 
 import java.util.UUID;
@@ -13,7 +14,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 public class OrangebeardLoggerTest {
-    private final OrangebeardV3Client orangebeardClient = mock(OrangebeardV3Client.class);
+    private final OrangebeardAsyncV3Client orangebeardClient = mock(OrangebeardAsyncV3Client.class);
     private final AttachmentHandler orangebeardLogger = new AttachmentHandler(orangebeardClient, "ROOTPATH");
 
     @Test
