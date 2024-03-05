@@ -31,8 +31,8 @@
         <java.version>1.11</java.version>
 
         <!--dependency versions-->
-        <fitnesse.version>20231203</fitnesse.version>
-        <hsac.version>5.3.7</hsac.version>
+        <fitnesse.version>20240219</fitnesse.version>
+        <hsac.version>5.3.11</hsac.version>
         <java.client.version>3.0.0</java.client.version>
     </properties>
 

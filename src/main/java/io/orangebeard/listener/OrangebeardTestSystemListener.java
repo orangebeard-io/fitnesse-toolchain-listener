@@ -199,51 +199,10 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
         UUID testRunUUID = runContext.getTestRunUUID();
         UUID suiteId = runContext.getSuiteId(fullSuiteName);
-        UUID parentSuiteId = null;
         String suitePath = "";
 
         if (suiteId == null) {
-            //iterate over parents to see if any were registered
-
-            while (parentSuiteId == null && !suiteStruct.isEmpty()) {
-                suitesToStart.add(suiteStruct.removeLast());
-                suitePath = String.join(".", suiteStruct);
-                parentSuiteId = runContext.getSuiteId(suitePath);
-            }
-
-            //start suites as children of parent if applicable
-            Collections.reverse(suitesToStart);
-
-            for (String suite : suitesToStart) {
-                suitePath = format("%s.%s", suitePath, suite);
-                if (suitePath.startsWith(".")) {
-                    suitePath = suitePath.substring(1);
-                }
-
-                String description = "";
-                Set<Attribute> attributes = Collections.emptySet();
-
-                WikiTestPage wikiTestPage = (WikiTestPage) testPage;
-                PageData suitePageData = getPageDataForSuite(suitePath, wikiTestPage.getSourcePage());
-
-                if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
-                    attributes = convertAttributes(suitePageData.getAttribute(WikiPageProperty.SUITES));
-                }
-                if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.HELP) != null) {
-                    description = suitePageData.getAttribute(WikiPageProperty.HELP);
-                }
-
-                //only start suites one-by-one to ensure attributes and descriptions to be sent
-                StartSuite startSuite = new StartSuite(testRunUUID, parentSuiteId, description, attributes, List.of(suite));
-                List<UUID> startedSuites = orangebeardClient.startSuite(startSuite);
-
-                UUID startedSuite = startedSuites.get(0);
-                runContext.addSuite(suitePath, new Suite(startedSuite, parentSuiteId, suite, List.of(suite)));
-
-                parentSuiteId = startedSuite;
-            }
-
-            suiteId = runContext.getSuiteId(suitePath);
+            suiteId = startSuiteStructure((WikiTestPage) testPage, suiteStruct, suitesToStart, suitePath, testRunUUID);
         }
 
         // Start the test here
@@ -260,6 +219,52 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
         runContext.addTest(getTestName(testPage), testId);
 
         logScenarioLibraries(testId, ((WikiTestPage) testPage).getScenarioLibraries());
+    }
+
+    private UUID startSuiteStructure(WikiTestPage testPage, LinkedList<String> suiteStruct, List<String> suitesToStart, String suitePath, UUID testRunUUID) {
+        UUID parentSuiteId = null;
+        UUID suiteId;
+        //iterate over parents to see if any were registered
+
+        while (parentSuiteId == null && !suiteStruct.isEmpty()) {
+            suitesToStart.add(suiteStruct.removeLast());
+            suitePath = String.join(".", suiteStruct);
+            parentSuiteId = runContext.getSuiteId(suitePath);
+        }
+
+        //start suites as children of parent if applicable
+        Collections.reverse(suitesToStart);
+
+        for (String suite : suitesToStart) {
+            suitePath = format("%s.%s", suitePath, suite);
+            if (suitePath.startsWith(".")) {
+                suitePath = suitePath.substring(1);
+            }
+
+            String description = "";
+            Set<Attribute> attributes = Collections.emptySet();
+
+            PageData suitePageData = getPageDataForSuite(suitePath, testPage.getSourcePage());
+
+            if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.SUITES) != null) {
+                attributes = convertAttributes(suitePageData.getAttribute(WikiPageProperty.SUITES));
+            }
+            if (suitePageData != null && suitePageData.getAttribute(WikiPageProperty.HELP) != null) {
+                description = suitePageData.getAttribute(WikiPageProperty.HELP);
+            }
+
+            //only start suites one-by-one to ensure attributes and descriptions to be sent
+            StartSuite startSuite = new StartSuite(testRunUUID, parentSuiteId, description, attributes, List.of(suite));
+            List<UUID> startedSuites = orangebeardClient.startSuite(startSuite);
+
+            UUID startedSuite = startedSuites.get(0);
+            runContext.addSuite(suitePath, new Suite(startedSuite, parentSuiteId, suite, List.of(suite)));
+
+            parentSuiteId = startedSuite;
+        }
+
+        suiteId = runContext.getSuiteId(suitePath);
+        return suiteId;
     }
 
     @Override
@@ -322,7 +327,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
 
     /**
      * Resets the context and client. Used when a FitNesse Run switches testsystems i.e. from FIT to SLiM.
-     * This results in starting e new Orangebeard run with a different testSytem attribute.
+     * This results in starting e new Orangebeard run with a different testSystem attribute.
      */
     private void reset() {
         this.runContext = null;
