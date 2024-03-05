@@ -27,6 +27,16 @@ public class OrangebeardTableLogParserTest {
             "</body>\n" +
             "</html>";
 
+    private final String TEST_HTML_TABLE_WITH_PRE = "<html>\n" +
+            "<body>\n" +
+            "<table><tr><td><pre><xml>\n" +
+            "    <node1>text</node1>\n" +
+            "</xml></pre>\n +" +
+            "</td></tr></table>\n" +
+            "<a href=\"http://hyperlink2\">this is link 2</a>\n" +
+            "</body>\n" +
+            "</html>";
+
     @Test
     public void multiple_images_can_be_replaced() throws Exception {
         mockStatic(ImageEncoder.class);
@@ -51,5 +61,10 @@ public class OrangebeardTableLogParserTest {
                 .doesNotContain("http://hyperlink2")
                 .contains("this is link 1")
                 .contains("this is link 2");
+    }
+
+    @Test
+    public void a_log_with_preformatted_xml_is_escaped_() {
+
     }
 }

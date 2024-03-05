@@ -30,7 +30,7 @@ public class OrangebeardEnabledSuiteResponder extends fitnesse.responders.run.Su
                 request.getResource(),
                 "",
                 OrangebeardPropertyHelper.getAttributesFromQueryString(request.getQueryString()),
-                OrangebeardPropertyHelper.getlogLevelFromStringOrElse(fitNesseProperties.getProperty(LOG_LEVEL.getPropertyName()), LogLevel.DEBUG),
+                OrangebeardPropertyHelper.getLogLevelFromStringOrElse(fitNesseProperties.getProperty(LOG_LEVEL.getPropertyName()), LogLevel.DEBUG),
                 Boolean.parseBoolean(fitNesseProperties.getProperty(LOGS_AT_END_OF_TEST.getPropertyName())));
 
         orangebeardListener = new OrangebeardTestSystemListener(orangebeardProperties);

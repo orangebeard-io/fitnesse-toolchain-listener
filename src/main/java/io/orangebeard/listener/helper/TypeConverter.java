@@ -22,7 +22,7 @@ public class TypeConverter {
     }
 
     public static Set<Attribute> convertAttributes(String attributeString) {
-        if (attributeString != null && attributeString.length() > 0) {
+        if (attributeString != null && !attributeString.isEmpty()) {
             return Arrays.stream(attributeString.split("\\s*[;,]\\s*"))
                     .map(Attribute::new)
                     .collect(Collectors.toSet());

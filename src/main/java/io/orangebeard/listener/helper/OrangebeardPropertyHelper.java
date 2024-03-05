@@ -30,7 +30,7 @@ public class OrangebeardPropertyHelper {
         return attributes;
     }
 
-    public static LogLevel getlogLevelFromStringOrElse(String level, LogLevel defaultLevel) {
-        return level != null ? LogLevel.valueOf(level.toLowerCase()) : defaultLevel;
+    public static LogLevel getLogLevelFromStringOrElse(String level, LogLevel defaultLevel) {
+        return level != null ? LogLevel.valueOf(level.toUpperCase()) : defaultLevel;
     }
 }

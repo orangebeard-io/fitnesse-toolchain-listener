@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 
 public class OrangebeardTableLogParser {
 
+    public static final String TABLE_STARTER = "<table";
+
     private OrangebeardTableLogParser() {
         // only static functions
     }
@@ -20,7 +22,7 @@ public class OrangebeardTableLogParser {
     public static String parseLogMessage(String chunk, String rootPath) {
         String log = removeNonTableProlog(chunk);
 
-        if (log.toLowerCase().contains("<table")) {
+        if (log.toLowerCase().contains(TABLE_STARTER)) {
             log = applyOrangebeardTableStyling(log);
         }
 
@@ -41,15 +43,15 @@ public class OrangebeardTableLogParser {
             try {
                 html = html.replace(imgMatcher.group(), "<img src=\"data:image/png;base64," + ImageEncoder.encodeForEmbedding(imageFile) + "\" width=\"200\" onClick=\"openImage(this)\">");
             } catch (IOException ioe) {
-                logger.error("Exception while reading image: " + img + " (" + ioe.getMessage() + ")");
+                logger.error("Exception while reading image: {}} ({})", img, ioe.getMessage());
             }
         }
         return html;
     }
 
     public static String removeNonTableProlog(String html) {
-        if (html.toLowerCase().contains("<table")) {
-            html = html.substring(html.indexOf("<table"), html.lastIndexOf("</table>") + 8);
+        if (html.toLowerCase().contains(TABLE_STARTER)) {
+            html = html.substring(html.indexOf(TABLE_STARTER), html.lastIndexOf("</table>") + 8);
         }
         return html;
     }
