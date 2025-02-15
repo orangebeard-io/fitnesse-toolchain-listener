@@ -71,7 +71,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.8.0</version>
+            <version>5.9.0</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -84,13 +84,6 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>3.24.2</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- library tot test with system properties -->
-        <dependency>
-            <groupId>com.github.stefanbirkner</groupId>
-            <artifactId>system-lambda</artifactId>
-            <version>1.2.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -110,6 +103,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
                 <configuration>
+                    <argLine>--add-opens java.base/java.util=ALL-UNNAMED</argLine>
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
