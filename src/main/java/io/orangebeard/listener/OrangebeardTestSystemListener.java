@@ -133,10 +133,6 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
     public void testSystemStarted(TestSystem testSystem) {
         orangebeardProperties.checkPropertiesArePresent();
 
-        // If a test-run UUID is present in orangebeard.properties it belongs to the uuid that was retrieved from
-        // announcing a test run and that scenario is triggered from the atp-integration test pipeline.
-        // If no UUID is present then start the test run normally by providing a proper StartTestRun object.
-
         if (orangebeardProperties.isAnnouncedUUIDPresent()) {
             UUID testRunUUID = orangebeardProperties.getTestRunUUID();
             orangebeardClient.startAnnouncedTestRun(testRunUUID);
@@ -146,7 +142,7 @@ public class OrangebeardTestSystemListener implements TestSystemListener, Closea
                     orangebeardProperties.getTestSetName(),
                     orangebeardProperties.getDescription(),
                     getTestRunAttributes(testSystem.getName()),
-                    ChangedComponentsHelper.getChangedComponents());
+                    orangebeardProperties.getSutComponents());
             this.runContext = new ToolchainRunningContext(orangebeardClient.startTestRun(testRun));
         }
     }

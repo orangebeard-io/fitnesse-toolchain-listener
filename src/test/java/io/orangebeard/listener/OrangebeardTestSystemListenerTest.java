@@ -22,7 +22,6 @@ import fitnesse.testsystems.TestSummary;
 import fitnesse.testsystems.TestSystem;
 import fitnesse.wiki.PageData;
 import fitnesse.wiki.WikiPage;
-import org.assertj.core.api.Assertions;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -32,7 +31,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -159,21 +157,6 @@ public class OrangebeardTestSystemListenerTest {
         assertThat(argumentCaptor.getValue().getTestSetName()).isEqualTo(testSetName);
         assertThat(argumentCaptor.getValue().getDescription()).isEqualTo(description);
         assertThat(argumentCaptor.getValue().getStartTime()).isNotNull();
-    }
-
-    @Test
-    public void when_a_test_system_is_started_changed_components_are_passed_along_if_available() throws Exception {
-        TestSystem testSystem = mock(TestSystem.class);
-        when(testSystem.getName()).thenReturn("test system name");
-
-        withEnvironmentVariable("orangebeard.changedComponents", "componentA, componentB").execute(() -> {
-            orangebeardTestSystemListener.testSystemStarted(testSystem);
-
-            ArgumentCaptor<StartV3TestRun> argumentCaptor = ArgumentCaptor.forClass(StartV3TestRun.class);
-            verify(orangebeardClient).startTestRun(argumentCaptor.capture());
-
-            Assertions.assertThat(argumentCaptor.getValue().getChangedComponents()).extracting("componentName").containsOnly("componentA", "componentB");
-        });
     }
 
     @Test
